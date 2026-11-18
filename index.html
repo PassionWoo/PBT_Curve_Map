@@ -122,7 +122,7 @@ hr{border:0;border-top:1px solid #e7e7e7;margin:16px 0}
      <summary aria-label="문서 메뉴 열기">문서 <span aria-hidden="true">⌄</span></summary>
      <div class="toolbar-menu-items">
       <button id="newBtn">새 문서</button>
-      <button id="exampleBtn">영어 예제</button>
+      <button id="exampleBtn">예제</button>
       <button id="openBtn" title="JSON 파일 불러오기">불러오기</button>
      </div>
     </details>
@@ -199,7 +199,12 @@ let camera={x:-40,y:-40,z:1},mode='select',selection={nodes:[],edge:null},connec
 let undoStack=[],redoStack=[],drag=null,spaceHeld=false,pointers=new Map(),pinch=null,editId=null,editOriginal='',lastTap=null;
 const measureCtx=document.createElement('canvas').getContext('2d');
 
-function addSample(){
+// JSON으로 제공된 사용자 도식을 원본 그대로 기본 예제에 반영합니다.
+const BUILTIN_EXAMPLE={"version":1,"nodes":[{"id":"idmwm6hhp014yzib0","x":531,"y":32,"w":200,"h":91,"text":"높은 기대","fs":17,"highlighted":true},{"id":"idmwm6hl2kj8wjjsv","x":138,"y":501,"w":200,"h":91,"text":"실패에 대한 예기불안","fs":17,"highlighted":false},{"id":"idmwm6hoyki5v7gif","x":533,"y":476,"w":200,"h":91,"text":"회피/미루기","fs":17,"highlighted":false},{"id":"idmwm6hu4d8472jio","x":518,"y":786,"w":200,"h":91,"text":"마감에 쫓기는 상황","fs":17,"highlighted":false},{"id":"idmwm6i3akbhqznst","x":626,"y":199,"w":200,"h":91,"text":"자책","fs":17,"highlighted":false},{"id":"idmwm6ic9oyl33fvv","x":968,"y":35,"w":200,"h":91,"text":"\"게으른 나\"","fs":17,"highlighted":false},{"id":"idmwm6kskczlhrx5e","x":1101,"y":185,"w":200,"h":91,"text":"유능감 저하","fs":17,"highlighted":false},{"id":"idmwm6l4okqo6334s","x":996,"y":498,"w":200,"h":91,"text":"동기저하\n(다시 시작이 어려워짐)","fs":17,"highlighted":false},{"id":"idmwm7yqtfn2g5v2z","x":122,"y":889,"w":200,"h":91,"text":"식은땀, 답답한 느낌","fs":17},{"id":"idmwm7z3eack59o93","x":589,"y":932,"w":200,"h":91,"text":"과제 제출 실패","fs":17},{"id":"idmwm7z9jumkcxxf3","x":962,"y":880,"w":200,"h":91,"text":"교수님/동료들의\n부정적인 평가","fs":17},{"id":"idmwm801mym28u7wv","x":54,"y":164,"w":200,"h":91,"text":"나 자신에 초점","fs":17}],"edges":[{"id":"idmwm7psqjuosyo4z","from":"idmwm6hhp014yzib0","to":"idmwm6hl2kj8wjjsv","o1":{"x":-72,"y":176},"o2":{"x":-8,"y":-209},"direction":"forward","dash":false,"fromAnchor":{"x":0,"y":0.475}},{"id":"idmwm7psqjg1wsdiz","from":"idmwm6hl2kj8wjjsv","to":"idmwm6hoyki5v7gif","o1":{"x":50,"y":37},"o2":{"x":-74,"y":44},"direction":"forward","dash":false},{"id":"idmwm7psqj0lmemj4","from":"idmwm6hoyki5v7gif","to":"idmwm6hu4d8472jio","o1":{"x":-67,"y":111},"o2":{"x":15,"y":-134},"direction":"forward","dash":false},{"id":"idmwm7psqjkqvvw1f","from":"idmwm6i3akbhqznst","to":"idmwm6ic9oyl33fvv","o1":{"x":39,"y":-84},"o2":{"x":-113,"y":-12},"direction":"forward","dash":false,"fromAnchor":{"x":0.488,"y":0},"toAnchor":{"x":0,"y":0.555}},{"id":"idmwm7psqjrolwfsi","from":"idmwm6kskczlhrx5e","to":"idmwm6l4okqo6334s","o1":{"x":21,"y":125},"o2":{"x":-14,"y":-105},"direction":"forward","dash":false},{"id":"idmwm7yzvmwdnsrr9","from":"idmwm6hu4d8472jio","to":"idmwm7yqtfn2g5v2z","o1":{"x":-87.38970746645407,"y":-20.394739747012533},"o2":{"x":87.57029253354591,"y":-19.60485261382964},"direction":"forward","dash":false},{"id":"idmwm7z8iq8tcap0p","from":"idmwm7yqtfn2g5v2z","to":"idmwm7z3eack59o93","o1":{"x":74.43522161204126,"y":27.135458220417476},"o2":{"x":-78.20477838795873,"y":12.686526181582574},"direction":"forward","dash":false},{"id":"idmwm7zif6zm3zwr0","from":"idmwm7z3eack59o93","to":"idmwm7z9jumkcxxf3","o1":{"x":64.37442443115614,"y":12.192049467105765},"o2":{"x":-59.46557556884384,"y":27.505597854202524},"direction":"forward","dash":false},{"id":"idmwm7zy2afcfwbbx","from":"idmwm6l4okqo6334s","to":"idmwm6hoyki5v7gif","o1":{"x":-93.73074702825942,"y":-24.476293962208594},"o2":{"x":95.62925297174057,"y":-15.4786265755996},"direction":"forward","dash":false},{"id":"idmwm806y25fsloan","from":"idmwm7z9jumkcxxf3","to":"idmwm801mym28u7wv","o1":{"x":-91,"y":-418},"o2":{"x":502,"y":128},"direction":"forward","dash":false,"toAnchor":{"x":0.536,"y":1}},{"id":"idmwm80ax6b8masxs","from":"idmwm801mym28u7wv","to":"idmwm6i3akbhqznst","o1":{"x":132.69850831541373,"y":28.15706969678648},"o2":{"x":-135.14149168458624,"y":11.768258507975295},"direction":"forward","dash":false},{"id":"idmwm80hoys0afuv7","from":"idmwm6ic9oyl33fvv","to":"idmwm6kskczlhrx5e","o1":{"x":68,"y":29},"o2":{"x":9,"y":-41},"direction":"forward","dash":false,"fromAnchor":{"x":1,"y":0.467},"toAnchor":{"x":0.591,"y":0}}],"zones":["Attention","Cognition","Self","Affect","Behaviour","Motivation","Biophysiological","Context","Sociocultural"],"showZones":true,"showGrid":false};
+function addSample(){return clone(BUILTIN_EXAMPLE);}
+
+// 구버전 기본 영어 예제만 새 예제로 안전하게 교체하기 위한 비교용 함수.
+function legacySampleForMigration(){
  const n=(id,x,y,w,h,text,fs=17)=>({id,x,y,w,h,text,fs});
  const nodes=[
  n('neck',115,123,207,116,'Notices sore neck while doing things including getting off to sleep'),
@@ -241,6 +246,16 @@ function addSample(){
  edge('relationship','family',38)
  ];
  return {...emptyDoc(),nodes,edges};
+}
+
+function isUntouchedLegacySample(existing){
+ if(!existing||existing.nodes.length!==21||existing.edges.length!==24)return false;
+ const prev=legacySampleForMigration();
+ const nodeSignature=n=>[n.id,n.x,n.y,n.w,n.h,n.text,n.fs,Boolean(n.highlighted)];
+ const edgeSignature=e=>[e.from,e.to,e.o1?.x,e.o1?.y,e.o2?.x,e.o2?.y,e.direction,Boolean(e.dash),e.fromAnchor?.x??null,e.fromAnchor?.y??null,e.toAnchor?.x??null,e.toAnchor?.y??null];
+ return existing.nodes.every((n,i)=>JSON.stringify(nodeSignature(n))===JSON.stringify(nodeSignature(prev.nodes[i])))
+  &&existing.edges.every((e,i)=>JSON.stringify(edgeSignature(e))===JSON.stringify(edgeSignature(prev.edges[i])))
+  &&existing.zones.every((name,i)=>name===INITIAL_ZONES[i]);
 }
 
 function borderPoint(n,toward){
@@ -726,7 +741,13 @@ window.addEventListener('keydown',e=>{
 window.addEventListener('keyup',e=>{if(e.code==='Space')spaceHeld=false;});
 window.addEventListener('blur',()=>{spaceHeld=false;});
 window.addEventListener('resize',updateView);
-try{const s=localStorage.getItem('pbt-curve-map-v1');doc=s?sanitizeImport(JSON.parse(s)):addSample();}catch(err){doc=addSample();}
+try{
+ const saved=localStorage.getItem('pbt-curve-map-v1');
+ doc=saved?sanitizeImport(JSON.parse(saved)):addSample();
+ // 기존에 수정 없이 저장했던 구버전 영어 예제만 교체합니다.
+ // 사용자가 직접 수정한 문서는 자동으로 덮어쓰지 않습니다.
+ if(saved&&isUntouchedLegacySample(doc)){doc=addSample();persist();}
+}catch(err){doc=addSample();}
 render();requestAnimationFrame(fit);
 })();
 </script>
