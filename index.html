@@ -1,0 +1,681 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light" />
+<title>PBT Curve Map — 자유 곡선 사례개념화 편집기 (v7)</title>
+<style>
+:root{--ui-scale:1.3;--sidebar-width:clamp(266px,calc(266px * var(--ui-scale)),480px);font-family:system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:#171717;background:#ececec;font-synthesis:none}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden}
+button,input,textarea,select{font:inherit}button{cursor:pointer}
+#app{height:100dvh;display:flex;flex-direction:column;min-height:0}
+.top{flex:none;background:#fff;border-bottom:1px solid #c8c8c8;z-index:12}
+.topline{display:flex;align-items:center;gap:12px;padding:10px 16px 9px;min-height:54px}
+.brand{font-size:calc(17px * var(--ui-scale));font-weight:800;white-space:nowrap;letter-spacing:-.6px}
+.brand small{display:block;font-size:calc(10px * var(--ui-scale));color:#777;font-weight:500;letter-spacing:.1px}
+.top-actions{display:flex;gap:6px;align-items:center;overflow:auto;scrollbar-width:thin;flex:1;padding:1px 1px 3px}
+.sep{height:24px;width:1px;background:#ddd;flex:none;margin:0 3px}
+button{color:#202020;background:#fff;border:1px solid #cecece;border-radius:6px;padding:7px 10px;font-size:calc(12px * var(--ui-scale));font-weight:600;white-space:nowrap;transition:background .12s,border-color .12s}
+button:hover{background:#f2f2f2;border-color:#999}button:focus-visible{outline:2px solid #555;outline-offset:2px}
+button.active,button.primary{background:#202020;border-color:#202020;color:white}button.active:hover,button.primary:hover{background:#444}
+button:disabled{cursor:not-allowed;opacity:.35}button.iconbtn{width:calc(34px * var(--ui-scale));min-width:34px;padding:7px 0;text-align:center}
+#sidebarToggle{display:none;margin-left:auto}
+.area{display:flex;flex:1;min-height:0;position:relative}
+.side{flex:0 0 var(--sidebar-width);width:var(--sidebar-width);background:#fff;border-right:1px solid #c9c9c9;display:flex;flex-direction:column;overflow:auto;z-index:10}
+.panel{padding:16px;border-bottom:1px solid #e5e5e5}
+.panel h2{font-size:calc(12px * var(--ui-scale));letter-spacing:.03em;margin:0 0 12px;font-weight:800}
+.panel p{font-size:calc(12px * var(--ui-scale));line-height:1.65;color:#666;margin:0}
+.instr{color:#464646!important}
+
+/* 조작법: 마우스 제스처를 한눈에 알아보는 흑백 픽토그램 */
+.howto{display:flex;flex-direction:column;gap:5px}
+.howto-row{display:flex;align-items:center;gap:9px;min-height:calc(34px * var(--ui-scale));font-size:calc(11.5px * var(--ui-scale));line-height:1.25;color:#333}
+.howto-icon{width:calc(34px * var(--ui-scale));height:calc(34px * var(--ui-scale));flex:none;border:1px solid #dedede;border-radius:6px;display:grid;place-items:center;background:#fafafa;color:#252525}
+.howto-icon svg{width:74%;height:74%;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;overflow:visible}
+.howto-text{min-width:0}.howto-text b{font-weight:750;color:#111}.howto-text small{display:block;color:#6b6b6b;font-size:calc(10.5px * var(--ui-scale));margin-top:1px}
+.hintkey{border:1px solid #d2d2d2;border-radius:3px;padding:0 4px;font-size:calc(10px * var(--ui-scale));color:#888}
+.field{display:block;margin:11px 0 0;font-size:calc(11px * var(--ui-scale));font-weight:700;color:#555}
+.field textarea,.field input,.field select{display:block;margin-top:6px;width:100%;background:#fff;border:1px solid #c7c7c7;border-radius:5px;color:#222;outline:0;font-weight:400;padding:9px;font-size:calc(12px * var(--ui-scale))}
+.field textarea:focus,.field input:focus,.field select:focus{border-color:#333}
+.field textarea{min-height:95px;resize:vertical;line-height:1.5}
+.fieldrow{display:flex;gap:8px}.fieldrow>*{width:50%;flex:1;min-width:0}
+.actionrow{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}.actionrow>button{flex:1}
+hr{border:0;border-top:1px solid #e7e7e7;margin:16px 0}
+.checkbox{display:flex;align-items:center;gap:8px;font-size:calc(12px * var(--ui-scale));margin:11px 0;color:#424242;cursor:pointer}.checkbox input{accent-color:#222;width:15px;height:15px}
+.mini{font-size:calc(11px * var(--ui-scale))!important;color:#777!important;line-height:1.65}
+#stage{position:relative;flex:1;min-width:0;overflow:hidden;background:#e6e6e6}
+#paper{display:block;width:100%;height:100%;touch-action:none;user-select:none;-webkit-user-select:none;cursor:default}
+#paper.mode-note{cursor:crosshair}#paper.mode-connect{cursor:crosshair}#paper.mode-pan{cursor:grab}#paper.is-dragging.mode-pan{cursor:grabbing}
+#paper text{user-select:none;pointer-events:none}
+#paper [data-kind=node]{cursor:grab}#paper [data-kind=resize]{cursor:nwse-resize}#paper [data-kind=control]{cursor:move}#paper [data-kind=endpoint]{cursor:crosshair}#paper [data-kind=edge]{cursor:pointer}
+#paper.mode-connect [data-kind=node]{cursor:crosshair}
+.node-rect{fill:#fff;stroke:#161616;stroke-width:1.8}
+#paper .selection{fill:none;stroke:#282828;stroke-width:1.8;stroke-dasharray:8 6;pointer-events:none}
+#paper .ctrl-line{stroke:#777;stroke-width:1.4;stroke-dasharray:5 5;pointer-events:none}
+#paper .ctrl-dot{fill:#fff;stroke:#111;stroke-width:2}
+#paper .endpoint-dot{fill:#171717;stroke:#fff;stroke-width:2.5}
+#paper .drop-highlight{fill:none;stroke:#111;stroke-width:3;stroke-dasharray:9 4;pointer-events:none}
+#paper .marquee{fill:#777;fill-opacity:.1;stroke:#222;stroke-dasharray:7 4;stroke-width:1.6;pointer-events:none}
+#paper .paper-outline{fill:none;stroke:#a0a0a0;stroke-width:1.4;pointer-events:none}
+#stageHint{position:absolute;left:12px;bottom:12px;background:rgba(255,255,255,.93);padding:8px 11px;border-radius:5px;font-size:calc(11px * var(--ui-scale));color:#555;max-width:calc(100% - 24px);pointer-events:none;border:1px solid #d3d3d3}
+/* The editing surface sits directly over the SVG memo; no floating dialog. */
+#paper [data-kind=node].editing text{visibility:hidden}
+#textEdit{position:absolute;display:none;z-index:6;background:transparent;border:0;box-shadow:none;padding:0;pointer-events:none}
+#textEdit textarea{display:block;width:100%;height:100%;min-height:0;max-height:none;margin:0;resize:none;border:0;outline:0;background:transparent;color:#111;text-align:center;font-weight:400;white-space:pre-wrap;overflow-wrap:break-word;overflow:auto;scrollbar-width:thin;caret-color:#111;pointer-events:auto}
+#textEdit textarea::selection{background:#bcbcbc;color:#111}
+.bottom{flex:none;min-height:31px;display:flex;align-items:center;gap:11px;justify-content:space-between;border-top:1px solid #c9c9c9;background:#fff;padding:5px 12px;font-size:calc(11px * var(--ui-scale));color:#777;white-space:nowrap}
+#info{overflow:hidden;text-overflow:ellipsis}#zoomLabel{font-variant-numeric:tabular-nums}
+.dialogBackdrop{position:fixed;inset:0;background:#0008;display:none;z-index:30;align-items:center;justify-content:center;padding:16px}
+.dialog{background:#fff;max-width:min(calc(500px * var(--ui-scale)),96vw);width:100%;border-radius:9px;border:1px solid #aaa;padding:20px;max-height:88dvh;overflow:auto;box-shadow:0 15px 50px #0004}
+.dialog h2{font-size:calc(17px * var(--ui-scale));margin:0 0 7px}.dialog p{font-size:calc(12px * var(--ui-scale));color:#777;margin:0 0 14px;line-height:1.6}
+.zoneFields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.zoneFields label{font-size:calc(11px * var(--ui-scale));color:#777}.zoneFields input{width:100%;border:1px solid #bbb;padding:8px 6px;border-radius:4px;font-size:calc(12px * var(--ui-scale));margin-top:5px}
+.dialogBtns{display:flex;justify-content:flex-end;gap:7px;margin-top:18px}
+.fileinput{display:none}
+@media(max-width:920px){.topline{flex-wrap:wrap;gap:5px;padding:8px}.brand{font-size:calc(15px * var(--ui-scale));margin:0 5px}.brand small{font-size:calc(9px * var(--ui-scale))}.top-actions{order:3;width:100%;flex-basis:100%;gap:4px}.top-actions button{padding:7px 9px}.side{position:absolute;top:0;bottom:0;left:0;box-shadow:8px 0 25px #0002;transform:translateX(-105%);transition:transform .16s}.side.open{transform:translateX(0)}#sidebarToggle{display:block}.topline{min-height:0}}
+@media(max-width:480px){.brand small{display:none}.bottom{font-size:calc(10px * var(--ui-scale))}#stageHint{font-size:calc(10px * var(--ui-scale));left:6px;bottom:7px;padding:6px 8px}.zoneFields{grid-template-columns:repeat(2,1fr)}}
+
+/* 모든 사용자에게 동일한 130% UI 가독성 설정 적용 */
+@media(max-width:920px){.side{width:min(90vw,var(--sidebar-width));max-width:90vw;flex-basis:auto}}
+@media(max-width:520px){.brand{font-size:calc(13px * var(--ui-scale))}}
+</style>
+</head>
+<body>
+<div id="app">
+<header class="top">
+ <div class="topline">
+  <div class="brand">PBT Curve Map <small>자유 곡선 사례개념화 편집기 · 오프라인</small></div>
+  <div class="top-actions">
+   <button data-mode="select" class="active" title="선택하고 메모를 옮깁니다 (V)">↖ 선택</button>
+   <button data-mode="note" title="빈 곳을 눌러 메모를 생성합니다 (N)">＋ 메모</button>
+   <button data-mode="connect" title="출발 메모 → 도착 메모 순서로 클릭합니다 (C)">↝ 화살표</button>
+   <button data-mode="pan" title="캔버스를 끌어 이동합니다 (H)">✋ 이동</button>
+   <span class="sep"></span>
+   <button class="iconbtn" id="undoBtn" title="실행 취소 (Ctrl+Z)">↶</button>
+   <button class="iconbtn" id="redoBtn" title="다시 실행 (Ctrl+Shift+Z)">↷</button>
+   <button id="fitBtn" title="도식 전체가 보이도록 맞춥니다">전체 보기</button>
+   <span class="sep"></span>
+   <button id="newBtn">새 문서</button>
+   <button id="exampleBtn">예제</button>
+   <button id="saveBtn" title="편집 가능한 JSON 파일 저장">저장</button>
+   <button id="openBtn" title="JSON 파일 불러오기">불러오기</button>
+   <button id="svgBtn" title="편집 가능한 벡터 그림 내보내기">SVG</button>
+   <button id="pngBtn" title="고해상도 PNG 그림 내보내기">PNG</button>
+  </div>
+  <button id="sidebarToggle" aria-label="편집 설정 열기">⚙ 설정</button>
+ </div>
+</header>
+<div class="area">
+ <aside class="side" id="sidebar">
+  <section class="panel"><h2>그리는 방법</h2>
+   <div class="howto" aria-label="편집기 주요 조작법">
+    <div class="howto-row" title="마우스 더블클릭으로 노드 생성"><span class="howto-icon"><svg viewBox="0 0 30 30" aria-hidden="true"><rect x="10" y="3" width="13" height="23" rx="6.5"/><path d="M16.5 3v9M10 12h13"/><path d="M4 5l-2 2m5-2 2 2M4 11l-2 2m5-2 2 2"/></svg></span><span class="howto-text"><b>노드 만들기</b><small>빈 곳 더블클릭</small></span></div>
+    <div class="howto-row" title="기존 노드를 두 번 클릭해서 글 수정"><span class="howto-icon"><svg viewBox="0 0 30 30" aria-hidden="true"><rect x="3.5" y="5" width="21" height="20" rx="3"/><path d="M10 10v10m-3 0h6M8 10h4"/><path d="M18 20l5-5 2 2-5 5-3 1z" fill="#fff"/></svg></span><span class="howto-text"><b>내용 수정</b><small>노드 더블클릭</small></span></div>
+    <div class="howto-row" title="같은 방향으로 다시 끌어 놓으면 연결 삭제"><span class="howto-icon"><svg viewBox="0 0 30 30" aria-hidden="true"><rect x="2" y="4" width="9" height="9" rx="1"/><rect x="19" y="17" width="9" height="9" rx="1"/><path d="M11 8q14-1 13 9m-3-3 3 3 3-3"/></svg></span><span class="howto-text"><b>연결·삭제</b><small>노드 끌어 놓기</small></span></div>
+    <div class="howto-row" title="검은 점은 양 끝, 흰 점은 곡선 조절"><span class="howto-icon"><svg viewBox="0 0 30 30" aria-hidden="true"><path d="M3 23C7 2 22 28 27 5"/><circle cx="3" cy="23" r="2.4" fill="#222"/><circle cx="27" cy="5" r="2.4" fill="#222"/><circle cx="10" cy="9" r="2.5" fill="#fff"/><circle cx="21" cy="23" r="2.5" fill="#fff"/></svg></span><span class="howto-text"><b>화살표 수정</b><small>검은 점·흰 점 드래그</small></span></div>
+    <div class="howto-row" title="Shift 키를 누르고 여러 노드를 클릭"><span class="howto-icon"><svg viewBox="0 0 30 30" aria-hidden="true"><rect x="3" y="4" width="15" height="15" rx="2"/><rect x="12" y="13" width="15" height="14" rx="2" fill="#fafafa"/><path d="m16 20 3 3 5-6"/></svg></span><span class="howto-text"><b>다중 선택</b><small>Shift+클릭 / 영역 드래그</small></span></div>
+    <div class="howto-row" title="선택된 노드들의 크기, 너비, 글자 크기를 함께 변경"><span class="howto-icon"><svg viewBox="0 0 30 30" aria-hidden="true"><rect x="4" y="4" width="15" height="15" rx="1.5"/><path d="M11 9v6m-3-6h6"/><path d="M20 20l7 7m-7 3v-6h6"/></svg></span><span class="howto-text"><b>일괄 변경</b><small>선택 후 속성 조절</small></span></div>
+    <div class="howto-row" title="마우스 휠 버튼 누른 채 화면 이동"><span class="howto-icon"><svg viewBox="0 0 30 30" aria-hidden="true"><rect x="9" y="3" width="12" height="24" rx="6"/><path d="M15 3v10M9 13h12"/><rect x="13" y="5" width="4" height="6" rx="1" fill="#222"/><path d="M6 18H2m2-2-2 2 2 2M24 18h4m-2-2 2 2-2 2"/></svg></span><span class="howto-text"><b>화면 이동</b><small>휠클릭+드래그</small></span></div>
+    <div class="howto-row" title="휠을 위아래로 굴려 확대·축소"><span class="howto-icon"><svg viewBox="0 0 30 30" aria-hidden="true"><rect x="9" y="3" width="12" height="24" rx="6"/><path d="M15 3v11M9 14h12"/><rect x="13.5" y="6" width="3" height="6" rx="1.5" fill="#222"/><path d="m5 9-2-2-2 2m2-2v7m22 1 2 2 2-2m-2 2v-7"/></svg></span><span class="howto-text"><b>확대·축소</b><small>마우스 휠</small></span></div>
+   </div>
+  </section>
+  <section class="panel" id="inspector"><h2>속성</h2><p>메모 또는 화살표를 클릭하면 편집 항목이 나타납니다.</p></section>
+  <section class="panel"><h2>캔버스</h2>
+    <label class="checkbox"><input type="checkbox" id="showZones" checked> PBT 3×3 영역 보이기</label>
+    <label class="checkbox"><input type="checkbox" id="showGrid"> 보조 격자 보이기</label>
+    <button id="zoneNamesBtn" style="width:100%;margin-top:5px">9개 영역 이름 수정</button>
+    <p class="mini" style="margin-top:10px">영역은 배경일 뿐입니다. 메모와 선은 영역에 구속되지 않고 자유롭게 배치됩니다.</p>
+  </section>
+  <section class="panel"><h2>단축키</h2>
+    <p><span class="hintkey">V</span> 선택　<span class="hintkey">N</span> 메모　<span class="hintkey">C</span> 연결<br><span class="hintkey">H</span> 화면 이동　<span class="hintkey">Del</span> 삭제<br><span class="hintkey">Shift+클릭</span> 추가 선택　<span class="hintkey">Ctrl+A</span> 모두 선택<br><span class="hintkey">Ctrl+Z</span> 취소　<span class="hintkey">Ctrl+D</span> 복제<br><span class="hintkey">Esc</span> 작업 해제</p>
+  </section>
+ </aside>
+ <main id="stage">
+  <svg id="paper" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="곡선 연결이 가능한 자유 배치 PBT 도식 편집 공간">
+   <defs>
+    <marker id="arrow-tip" markerUnits="strokeWidth" markerWidth="9" markerHeight="9" refX="9" refY="4.5" orient="auto-start-reverse"><path d="M0 0 L9 4.5 L0 9 Z" fill="#171717" /></marker>
+    <pattern id="grid-pattern" width="25" height="25" patternUnits="userSpaceOnUse"><path d="M25 0H0V25" fill="none" stroke="#ddd" stroke-width=".8" /></pattern>
+   </defs>
+   <g id="background-layer"></g>
+   <g id="links-layer"></g>
+   <g id="nodes-layer"></g>
+   <g id="overlay-layer"></g>
+  </svg>
+  <div id="stageHint">↖ 선택 모드 · 메모를 드래그하거나 두 번 클릭해 바로 입력하세요.</div>
+  <div id="textEdit"><textarea id="editText" spellcheck="false" aria-label="메모 안에서 글 수정" title="바깥 클릭: 저장 · Ctrl+Enter: 완료 · Esc: 취소"></textarea></div>
+ </main>
+</div>
+<footer class="bottom"><span id="info">준비됨</span><span><span id="zoomLabel">100%</span>　<button id="zoomOut" class="iconbtn" title="축소">−</button> <button id="zoomIn" class="iconbtn" title="확대">＋</button></span></footer>
+</div>
+<input class="fileinput" type="file" id="fileInput" accept=".json,application/json" />
+<div class="dialogBackdrop" id="zoneDialog" role="dialog" aria-modal="true" aria-label="PBT 영역 이름 편집"><div class="dialog"><h2>9개 영역 이름 수정</h2><p>행별 왼쪽에서 오른쪽 순서입니다. 배경 영역 이름만 변경합니다.</p><div class="zoneFields" id="zoneFields"></div><div class="dialogBtns"><button id="zoneCancel">취소</button><button class="primary" id="zoneApply">적용</button></div></div></div>
+<script>
+(() => {
+'use strict';
+const W=1320,H=1110,CW=440,RH=370;
+const INITIAL_ZONES=['Attention','Cognition','Self','Affect','Behaviour','Motivation','Biophysiological','Context','Sociocultural'];
+const $=id=>document.getElementById(id);
+const svg=$('paper'), stage=$('stage'), layerBg=$('background-layer'), layerLinks=$('links-layer'), layerNodes=$('nodes-layer'), layerOverlay=$('overlay-layer');
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clone=o=>JSON.parse(JSON.stringify(o));
+const uid=()=>('id'+Date.now().toString(36)+Math.random().toString(36).slice(2,9));
+const center=n=>({x:n.x+n.w/2,y:n.y+n.h/2});
+const emptyDoc=()=>({version:1,nodes:[],edges:[],zones:INITIAL_ZONES.slice(),showZones:true,showGrid:false});
+let doc=emptyDoc();
+let camera={x:-40,y:-40,z:1},mode='select',selection={nodes:[],edge:null},connectFrom=null;
+let undoStack=[],redoStack=[],drag=null,spaceHeld=false,pointers=new Map(),pinch=null,editId=null,editOriginal='',lastTap=null;
+const measureCtx=document.createElement('canvas').getContext('2d');
+
+function addSample(){
+ const n=(id,x,y,w,h,text,fs=17)=>({id,x,y,w,h,text,fs});
+ const nodes=[
+ n('neck',115,123,207,116,'Notices sore neck while doing things including getting off to sleep'),
+ n('settle',462,27,202,108,'Wonders when it will settle down so she can sleep well again'),
+ n('worry',588,165,201,103,'Wonders whether it will stay, what she should do about it'),
+ n('ignore',901,27,200,113,'Deals with aches and pains by ignoring them: “Just get on with it”'),
+ n('practical',900,172,201,83,'“I’m a practical person”'),
+ n('family',1121,90,176,112,'“I’ll deal with it if it doesn’t get in the way of my family & relationship”',15),
+ n('fedup',118,464,203,91,'Feeling fed up and irritable'),
+ n('ifhurts',116,588,207,101,'If it hurts, don’t do it; a bit anxious'),
+ n('crack',473,412,175,96,'Often “cracks” neck to check it out'),
+ n('pillow',691,413,169,96,'Changes pillow to see if it will help'),
+ n('avoid',477,579,171,92,'Avoids looking up'),
+ n('putup',695,583,172,97,'Puts up with pain until she has time to address it'),
+ n('loving',1062,408,226,106,'Wants to retain loving, giving relationship'),
+ n('prognosis',981,574,216,100,'Keen to establish prognosis so she can make plans'),
+ n('fibro',47,826,186,88,'?fibromyalgia\n?nociplastic mechanisms'),
+ n('oa',47,959,182,90,'Possible OA'),
+ n('sleep',265,824,172,89,'Not sleeping well'),
+ n('care',566,818,212,100,'History of not seeking healthcare often'),
+ n('shoulder',555,957,228,123,'Previously had sore shoulder and elbow; they settled down without specific treatment',16),
+ n('work',928,827,213,96,'Workplace expectations to be fully productive'),
+ n('relationship',1010,975,208,98,'Relationship is important')
+ ];
+ const lookup=new Map(nodes.map(t=>[t.id,t]));
+ function edge(from,to,bend=22,direction='forward'){
+   const a=lookup.get(from),b=lookup.get(to),p0=borderPoint(a,center(b)),p3=borderPoint(b,center(a));
+   const dx=p3.x-p0.x,dy=p3.y-p0.y,len=Math.max(Math.hypot(dx,dy),1),nx=-dy/len,ny=dx/len;
+   return {id:uid(),from,to,o1:{x:dx*.36+nx*bend,y:dy*.36+ny*bend},o2:{x:-dx*.36+nx*bend,y:-dy*.36+ny*bend},direction,dash:false};
+ }
+ const edges=[
+ edge('neck','settle',-10),edge('neck','crack',26),edge('neck','pillow',-32),edge('neck','sleep',25),
+ edge('settle','sleep',-28),edge('worry','settle',-26),edge('worry','avoid',20),
+ edge('fedup','ifhurts',-38),edge('ifhurts','avoid',-22),edge('ifhurts','crack',25),edge('ifhurts','neck',-40),
+ edge('crack','neck',25),edge('pillow','avoid',-25),edge('putup','practical',-28),
+ edge('ignore','putup',35),edge('practical','ignore',-36),edge('family','loving',16),
+ edge('relationship','loving',-20),edge('work','putup',-55),edge('care','putup',-30),
+ edge('shoulder','putup',45),edge('putup','prognosis',20),edge('prognosis','loving',-25),
+ edge('relationship','family',38)
+ ];
+ return {...emptyDoc(),nodes,edges};
+}
+
+function borderPoint(n,toward){
+ const c=center(n),dx=toward.x-c.x,dy=toward.y-c.y;
+ const hx=n.w/2,hy=n.h/2;
+ if(Math.abs(dx)<.001&&Math.abs(dy)<.001)return{x:c.x+hx,y:c.y};
+ const k=Math.min(Math.abs(dx)>1e-7?hx/Math.abs(dx):Infinity,Math.abs(dy)>1e-7?hy/Math.abs(dy):Infinity);
+ return{x:c.x+dx*k,y:c.y+dy*k};
+}
+function anchorPoint(n,anchor){
+ return {x:n.x+clamp(anchor.x,0,1)*n.w,y:n.y+clamp(anchor.y,0,1)*n.h};
+}
+function nearestAnchor(n,p){
+ const x=clamp(p.x,n.x,n.x+n.w),y=clamp(p.y,n.y,n.y+n.h);
+ const candidates=[{dist:Math.abs(y-n.y),x:(x-n.x)/n.w,y:0},
+  {dist:Math.abs(y-(n.y+n.h)),x:(x-n.x)/n.w,y:1},
+  {dist:Math.abs(x-n.x),x:0,y:(y-n.y)/n.h},
+  {dist:Math.abs(x-(n.x+n.w)),x:1,y:(y-n.y)/n.h}];
+ candidates.sort((a,b)=>a.dist-b.dist);
+ return {x:Math.round(candidates[0].x*1000)/1000,y:Math.round(candidates[0].y*1000)/1000,distance:candidates[0].dist};
+}
+function geom(e){
+ const a=doc.nodes.find(n=>n.id===e.from),b=doc.nodes.find(n=>n.id===e.to);
+ if(!a||!b)return null;
+ let p0,p3;
+ if(a.id===b.id){p0={x:a.x+a.w,y:a.y+a.h*.62};p3={x:a.x+a.w*.63,y:a.y};}
+ else{p0=borderPoint(a,center(b));p3=borderPoint(b,center(a));}
+ if(e.fromAnchor)p0=anchorPoint(a,e.fromAnchor);
+ if(e.toAnchor)p3=anchorPoint(b,e.toAnchor);
+ const c1={x:p0.x+e.o1.x,y:p0.y+e.o1.y},c2={x:p3.x+e.o2.x,y:p3.y+e.o2.y};
+ return {p0,p3,c1,c2,d:`M ${p0.x.toFixed(2)} ${p0.y.toFixed(2)} C ${c1.x.toFixed(2)} ${c1.y.toFixed(2)}, ${c2.x.toFixed(2)} ${c2.y.toFixed(2)}, ${p3.x.toFixed(2)} ${p3.y.toFixed(2)}`};
+}
+function autoCurve(e,bend=28){
+ const a=doc.nodes.find(n=>n.id===e.from),b=doc.nodes.find(n=>n.id===e.to);
+ if(!a||!b)return;
+ if(a===b){e.o1={x:140,y:-72};e.o2={x:100,y:-110};return;}
+ const {p0,p3}=geom(e),dx=p3.x-p0.x,dy=p3.y-p0.y;
+ const len=Math.max(1,Math.hypot(dx,dy)),nx=-dy/len,ny=dx/len;
+ e.o1={x:dx*.36+nx*bend,y:dy*.36+ny*bend};e.o2={x:-dx*.36+nx*bend,y:-dy*.36+ny*bend};
+}
+function straight(e){const g=geom(e);if(!g)return;const dx=g.p3.x-g.p0.x,dy=g.p3.y-g.p0.y;e.o1={x:dx/3,y:dy/3};e.o2={x:-dx/3,y:-dy/3};}
+function textLines(s,maxW,fs){
+ measureCtx.font=`${fs}px system-ui, -apple-system, 'Malgun Gothic', sans-serif`;
+ const measure=a=>measureCtx.measureText(a).width;
+ const result=[];
+ String(s).split('\n').forEach(p=>{
+  if(!p){result.push('');return;}
+  const tokens=p.match(/\S+|\s+/g)||[''];let line='';
+  for(const token of tokens){
+   const attempt=line+token;
+   if(measure(attempt)<=maxW){line=attempt;continue;}
+   if(line.trim()){result.push(line.trimEnd());line='';}
+   if(measure(token)<=maxW){line=token.trimStart();continue;}
+   for(const ch of Array.from(token)){
+     if(measure(line+ch)>maxW&&line){result.push(line);line='';}
+     line+=ch;
+   }
+  }
+  result.push(line.trimEnd());
+ });
+ return result.length?result:[''];
+}
+function nodeHeightFit(n,text=n.text){const lines=textLines(text,n.w-23,n.fs);return Math.max(64,lines.length*(n.fs*1.33)+25);}
+function renderBackground(){
+ let s='<rect x="0" y="0" width="1320" height="1110" fill="#fff"/>';
+ if(doc.showZones){
+  for(let i=0;i<9;i++){
+    const x=(i%3)*CW,y=Math.floor(i/3)*RH;
+    const bg=Math.floor(i/3)===1?'#ffffff':'#f1f1f1';
+    s+=`<rect x="${x}" y="${y}" width="${CW}" height="${RH}" fill="${bg}" stroke="#969696" stroke-width="1.1"/>`;
+    s+=`<text x="${x+CW/2}" y="${y+RH-25}" fill="#a1a1a1" text-anchor="middle" font-family="system-ui,sans-serif" font-size="29" font-weight="700">${esc(doc.zones[i]||'')}</text>`;
+  }
+ }
+ if(doc.showGrid)s+='<rect x="0" y="0" width="1320" height="1110" fill="url(#grid-pattern)" pointer-events="none"/>';
+ s+='<rect class="paper-outline" x="0" y="0" width="1320" height="1110" fill="none" stroke="#a0a0a0" stroke-width="1.4" pointer-events="none"/>';
+ layerBg.innerHTML=s;
+}
+function renderLinks(){layerLinks.innerHTML=doc.edges.map(e=>{
+ const g=geom(e);if(!g)return '';
+ const start=e.direction==='both'?' marker-start="url(#arrow-tip)"':'';
+ const end=e.direction==='none'?'':' marker-end="url(#arrow-tip)"';
+ return `<g data-kind="edge" data-id="${esc(e.id)}"><path d="${g.d}" fill="none" stroke="#171717" stroke-width="2.2" ${e.dash?'stroke-dasharray="9 7"':''} ${start}${end}/><path d="${g.d}" fill="none" stroke="transparent" stroke-width="17" pointer-events="stroke"/></g>`;
+}).join('');}
+function renderNodes(){layerNodes.innerHTML=doc.nodes.map(n=>{
+ const lines=textLines(n.text,n.w-22,n.fs),height=n.fs*1.35,start=n.y+(n.h-(lines.length-1)*height)/2+ n.fs*.34;
+ const s=lines.map((line,i)=>`<tspan x="${n.x+n.w/2}" y="${(start+i*height).toFixed(2)}">${esc(line)}</tspan>`).join('');
+ return `<g data-kind="node" data-id="${esc(n.id)}" class="${editId===n.id?'editing':''}"><rect class="node-rect" x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" fill="#fff" stroke="#161616" stroke-width="1.8"/><text text-anchor="middle" font-family="system-ui,-apple-system,'Malgun Gothic',sans-serif" font-size="${n.fs}" fill="#111" font-weight="400">${s}</text></g>`;
+}).join('');}
+function findNodeAt(p,excludeId=null){
+ // Reverse order matches the visually topmost memo on the canvas.
+ return [...doc.nodes].reverse().find(n=>n.id!==excludeId&&p.x>=n.x&&p.x<=n.x+n.w&&p.y>=n.y&&p.y<=n.y+n.h)||null;
+}
+function endpointTarget(p,edge,handle){
+ const direct=findNodeAt(p);
+ if(direct)return direct;
+ // A handle can sit exactly on (or a little outside) a memo border.
+ // Keep its own node as a drop target even if the pointer misses the rectangle.
+ const own=doc.nodes.find(n=>n.id===edge[handle]);
+ if(own&&p.x>=own.x-28&&p.x<=own.x+own.w+28&&p.y>=own.y-28&&p.y<=own.y+own.h+28)return own;
+ return null;
+}
+function dropTarget(moving,p){
+ const direct=findNodeAt(p,moving.id);
+ if(direct)return direct;
+ let candidate=null,best=0;
+ for(const n of doc.nodes){
+  if(n.id===moving.id)continue;
+  const w=Math.max(0,Math.min(n.x+n.w,moving.x+moving.w)-Math.max(n.x,moving.x));
+  const h=Math.max(0,Math.min(n.y+n.h,moving.y+moving.h)-Math.max(n.y,moving.y));
+  const share=w*h/Math.min(n.w*n.h,moving.w*moving.h);
+  if(share>0.2&&share>best){candidate=n;best=share;}
+ }
+ return candidate;
+}
+function renderOverlay(){
+ let s='';
+ for(const id of selection.nodes){
+  const n=doc.nodes.find(t=>t.id===id);if(!n)continue;
+  s+=`<rect class="selection" x="${n.x-5}" y="${n.y-5}" width="${n.w+10}" height="${n.h+10}"/>`;
+  s+=`<rect data-kind="resize" data-id="${esc(n.id)}" x="${n.x+n.w-6}" y="${n.y+n.h-6}" width="14" height="14" fill="#fff" stroke="#111" stroke-width="2"/>`;
+ }
+ if(selection.edge){const e=doc.edges.find(t=>t.id===selection.edge),g=e&&geom(e);
+ if(g){
+  s+=`<path d="${g.d}" fill="none" stroke="#777" stroke-width="1.1" stroke-dasharray="5 5" pointer-events="none"/>`;
+  s+=`<path class="ctrl-line" d="M${g.p0.x} ${g.p0.y} L${g.c1.x} ${g.c1.y} M${g.p3.x} ${g.p3.y} L${g.c2.x} ${g.c2.y}"/>`;
+  for(const [k,p] of [['1',g.c1],['2',g.c2]])s+=`<circle class="ctrl-dot" data-kind="control" data-id="${esc(e.id)}" data-handle="${k}" cx="${p.x}" cy="${p.y}" r="9"/>`;
+  for(const [k,p] of [['from',g.p0],['to',g.p3]])s+=`<circle class="endpoint-dot" data-kind="endpoint" data-id="${esc(e.id)}" data-handle="${k}" cx="${p.x}" cy="${p.y}" r="9"><title>${k==='from'?'출발':'도착'} 위치 변경: 다른 메모로 드래그</title></circle>`;
+ }
+ }
+ if(drag?.type==='nodes'&&drag.hoverId){
+  const n=doc.nodes.find(t=>t.id===drag.hoverId);
+  if(n){
+   const movingId=drag.origin.length===1?drag.origin[0].id:null;
+   const alreadyLinked=doc.edges.some(link=>link.from===movingId&&link.to===n.id);
+   s+=`<rect class="drop-highlight" x="${n.x-8}" y="${n.y-8}" width="${n.w+16}" height="${n.h+16}" rx="5"/><text x="${n.x+n.w/2}" y="${n.y-14}" text-anchor="middle" font-size="20" fill="#111" font-weight="700">${alreadyLinked?'놓으면 연결 삭제':'놓으면 연결'}</text>`;
+  }
+ }
+ if(drag?.type==='endpoint'&&drag.preview){
+  const ed=doc.edges.find(t=>t.id===drag.id),g=ed&&geom(ed),p=drag.preview;
+  if(g){const fixed=drag.h==='from'?g.p3:g.p0;
+   s+=`<path d="M ${fixed.x} ${fixed.y} L ${p.x} ${p.y}" fill="none" stroke="#111" stroke-width="2.3" stroke-dasharray="8 5" pointer-events="none"/><circle cx="${p.x}" cy="${p.y}" r="8" stroke="#111" stroke-width="2" fill="#fff" pointer-events="none"/>`;
+  }
+  const n=doc.nodes.find(t=>t.id===drag.hoverId);
+  if(n)s+=`<rect class="drop-highlight" x="${n.x-8}" y="${n.y-8}" width="${n.w+16}" height="${n.h+16}" rx="5"/>`;
+ }
+ if(drag?.type==='marquee'&&drag.moved){
+  const x=Math.min(drag.start.x,drag.current.x),y=Math.min(drag.start.y,drag.current.y);
+  s+=`<rect class="marquee" x="${x}" y="${y}" width="${Math.abs(drag.current.x-drag.start.x)}" height="${Math.abs(drag.current.y-drag.start.y)}"/>`;
+ }
+ if(mode==='connect'&&connectFrom){
+  const n=doc.nodes.find(t=>t.id===connectFrom);
+  if(n)s+=`<rect x="${n.x-7}" y="${n.y-7}" width="${n.w+14}" height="${n.h+14}" fill="none" stroke="#111" stroke-width="3" stroke-dasharray="12 7" pointer-events="none"/>`;
+ }
+ layerOverlay.innerHTML=s;
+}
+function updateView(){
+ const r=svg.getBoundingClientRect();if(!r.width||!r.height)return;
+ svg.setAttribute('viewBox',`${camera.x} ${camera.y} ${r.width/camera.z} ${r.height/camera.z}`);
+ $('zoomLabel').textContent=Math.round(camera.z*100)+'%';
+ if(editId)positionEditor();
+}
+function hint(){
+ const msgs={select:'↖ 노드 겹치기: 연결·삭제 · ● 끝점 · ○ 곡선 · Shift+클릭: 다중 선택',note:'＋ 메모: 빈 공간을 클릭해 새 메모를 만드세요',connect:connectFrom?'↝ 연결: 도착할 메모를 클릭하세요 (같은 메모 선택 시 순환 화살표)':'↝ 연결: 출발할 메모를 먼저 클릭하세요',pan:'✋ 이동: 드래그하여 캔버스를 이동하세요'};
+ $('stageHint').textContent=msgs[mode];
+ $('info').textContent=`메모 ${doc.nodes.length}개 · 화살표 ${doc.edges.length}개`+(selection.nodes.length?` · 메모 ${selection.nodes.length}개 선택`:'')+(selection.edge?' · 화살표 선택':'');
+ $('undoBtn').disabled=!undoStack.length;$('redoBtn').disabled=!redoStack.length;
+ document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));
+ svg.classList.toggle('mode-note',mode==='note');svg.classList.toggle('mode-connect',mode==='connect');svg.classList.toggle('mode-pan',mode==='pan');
+ $('showZones').checked=doc.showZones;$('showGrid').checked=doc.showGrid;
+}
+function render(){renderBackground();renderLinks();renderNodes();renderOverlay();updateView();hint();renderInspector();}
+function renderCanvas(){renderLinks();renderNodes();renderOverlay();hint();}
+function persist(){try{localStorage.setItem('pbt-curve-map-v1',JSON.stringify(doc));}catch(err){console.warn('자동 저장 실패',err);}}
+function history(before){const now=JSON.stringify(doc);if(before===now)return false;undoStack.push(before);if(undoStack.length>80)undoStack.shift();redoStack.length=0;persist();return true;}
+function mutate(fn){finishEdit(true);const before=JSON.stringify(doc);fn();history(before);render();}
+function undo(){finishEdit(true);if(!undoStack.length)return;redoStack.push(JSON.stringify(doc));doc=JSON.parse(undoStack.pop());selection={nodes:[],edge:null};connectFrom=null;persist();render();}
+function redo(){finishEdit(true);if(!redoStack.length)return;undoStack.push(JSON.stringify(doc));doc=JSON.parse(redoStack.pop());selection={nodes:[],edge:null};connectFrom=null;persist();render();}
+function contentBounds(){
+ let minX=0,minY=0,maxX=W,maxY=H;
+ for(const n of doc.nodes){minX=Math.min(minX,n.x);minY=Math.min(minY,n.y);maxX=Math.max(maxX,n.x+n.w);maxY=Math.max(maxY,n.y+n.h);}
+ for(const e of doc.edges){const g=geom(e);if(!g)continue;for(const p of [g.p0,g.p3,g.c1,g.c2]){minX=Math.min(minX,p.x);minY=Math.min(minY,p.y);maxX=Math.max(maxX,p.x);maxY=Math.max(maxY,p.y);}}
+ const pad=35;return{x:Math.floor(minX-pad),y:Math.floor(minY-pad),w:Math.ceil(maxX-minX+2*pad),h:Math.ceil(maxY-minY+2*pad)};
+}
+function fit(){const r=stage.getBoundingClientRect();if(!r.width||!r.height)return;const b=contentBounds();camera.z=clamp(Math.min((r.width-40)/b.w,(r.height-40)/b.h),.18,2);camera.x=b.x-(r.width/camera.z-b.w)/2;camera.y=b.y-(r.height/camera.z-b.h)/2;updateView();}
+function worldAt(clientX,clientY){const r=svg.getBoundingClientRect();return{x:camera.x+(clientX-r.left)/camera.z,y:camera.y+(clientY-r.top)/camera.z};}
+function zoomAt(clientX,clientY,nextZ){const p=worldAt(clientX,clientY),r=svg.getBoundingClientRect();camera.z=clamp(nextZ,.18,3.6);camera.x=p.x-(clientX-r.left)/camera.z;camera.y=p.y-(clientY-r.top)/camera.z;updateView();}
+function zoomCenter(f){const r=svg.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,camera.z*f);}
+function setMode(m){finishEdit(true);mode=m;connectFrom=null;hint();renderOverlay();}
+function clearSel(){selection={nodes:[],edge:null};}
+function selectNode(id,shift=false){if(shift){const arr=selection.nodes;selection.edge=null;selection.nodes=arr.includes(id)?arr.filter(x=>x!==id):[...arr,id];}else{if(!selection.nodes.includes(id))selection.nodes=[id];selection.edge=null;}renderOverlay();renderInspector();hint();}
+function selectEdge(id){selection={nodes:[],edge:id};renderOverlay();renderInspector();hint();}
+function newNode(p){const n={id:uid(),x:Math.round(p.x-100),y:Math.round(p.y-45),w:200,h:91,text:'새 메모',fs:17};mutate(()=>{doc.nodes.push(n);selection={nodes:[n.id],edge:null};});setMode('select');openEditor(n.id,true);}
+function newEdge(a,b){mutate(()=>{const e={id:uid(),from:a,to:b,o1:{x:0,y:0},o2:{x:0,y:0},direction:'forward',dash:false};doc.edges.push(e);autoCurve(e);selection={nodes:[],edge:e.id};});setMode('select');}
+function deleteSelection(){if(!selection.nodes.length&&!selection.edge)return;mutate(()=>{const rm=new Set(selection.nodes);doc.nodes=doc.nodes.filter(n=>!rm.has(n.id));doc.edges=doc.edges.filter(e=>!rm.has(e.from)&&!rm.has(e.to)&&e.id!==selection.edge);clearSel();});}
+function duplicateSelected(){if(!selection.nodes.length)return;mutate(()=>{const ids=new Map(),copies=[];for(const id of selection.nodes){const n=doc.nodes.find(t=>t.id===id);if(!n)continue;const c=clone(n);c.id=uid();c.x+=28;c.y+=28;ids.set(id,c.id);copies.push(c);}doc.nodes.push(...copies);const newLinks=doc.edges.filter(e=>ids.has(e.from)&&ids.has(e.to)).map(e=>({...clone(e),id:uid(),from:ids.get(e.from),to:ids.get(e.to)}));doc.edges.push(...newLinks);selection={nodes:copies.map(n=>n.id),edge:null};});}
+function renderInspector(){
+ const el=$('inspector');let html='<h2>속성</h2>';
+ if(selection.nodes.length===1){const n=doc.nodes.find(t=>t.id===selection.nodes[0]);if(!n)return;
+  html+=`<p>선택한 메모</p><label class="field">내용<textarea id="insText">${esc(n.text)}</textarea></label><div class="fieldrow"><label class="field">너비<input id="insWidth" type="number" min="90" max="900" value="${Math.round(n.w)}" /></label><label class="field">높이<input id="insHeight" type="number" min="55" max="900" value="${Math.round(n.h)}" /></label></div><label class="field">글자 크기<input id="insFont" type="number" min="10" max="40" value="${n.fs}" /></label><div class="actionrow"><button data-ins-action="edit">메모 안에서 수정</button><button data-ins-action="duplicate">복제</button><button data-ins-action="delete">삭제</button></div>`;
+ }else if(selection.nodes.length>1){
+  const nodes=doc.nodes.filter(n=>selection.nodes.includes(n.id));
+  const common=k=>nodes.every(n=>n[k]===nodes[0][k])?String(nodes[0][k]):'';
+  const fld=(id,title,key,min,max)=>`<label class="field">${title}<input id="${id}" type="number" min="${min}" max="${max}" value="${common(key)}" placeholder="혼합" /></label>`;
+  html+=`<p><b>${nodes.length}개 메모 선택</b> · 아래 값을 입력하면 모두 일괄 변경됩니다.</p><div class="fieldrow">${fld('insBatchWidth','너비','w',90,900)}${fld('insBatchHeight','높이','h',55,900)}</div>${fld('insBatchFont','글자 크기','fs',10,40)}<p class="mini" style="margin-top:10px">서로 다른 값은 '혼합'으로 표시됩니다. 수치를 입력하고 Enter를 누르거나 다른 곳을 클릭하세요. 모서리를 끌면 선택한 모든 메모의 크기가 함께 변합니다.</p><div class="actionrow"><button data-ins-action="duplicate">복제</button><button data-ins-action="delete">삭제</button></div>`;
+ }else if(selection.edge){const e=doc.edges.find(t=>t.id===selection.edge);if(!e)return;
+  const opts=(current)=>doc.nodes.map((n,i)=>`<option value="${esc(n.id)}" ${n.id===current?'selected':''}>${esc((i+1)+'. '+(n.text.replace(/\s+/g,' ').slice(0,30)||'(빈 메모)'))}</option>`).join('');
+  html+=`<p>선택한 화살표</p><p class="mini" style="margin-top:6px"><b>검은 원</b>을 같은 메모의 테두리로 끌면 부착 위치를, 다른 메모로 끌면 연결 대상을 변경합니다. <b>흰 원</b>은 곡선 조절입니다. 아래 목록으로도 재연결할 수 있습니다.</p><label class="field">출발 메모<select id="insFrom">${opts(e.from)}</select></label><label class="field">도착 메모<select id="insTo">${opts(e.to)}</select></label><label class="field">화살표 모양<select id="insDir"><option value="forward" ${e.direction==='forward'?'selected':''}>→ 단방향</option><option value="both" ${e.direction==='both'?'selected':''}>↔ 양방향</option><option value="none" ${e.direction==='none'?'selected':''}>— 화살촉 없음</option></select></label><label class="checkbox"><input id="insDash" type="checkbox" ${e.dash?'checked':''}> 점선으로 표시</label><div class="actionrow"><button data-ins-action="straight">직선화</button><button data-ins-action="curve">곡선 자동</button></div><div class="actionrow"><button data-ins-action="reverse">방향 반전</button><button data-ins-action="delete">삭제</button></div>`;
+ }else html+='<p>메모를 선택해 크기와 글자를 조절하거나, 선을 선택해 끝점을 다른 메모로 연결하세요.</p>';
+ el.innerHTML=html;
+}
+function positionEditor(){
+ if(!editId)return;
+ const n=doc.nodes.find(t=>t.id===editId);if(!n)return;
+ const z=camera.z,editor=$('textEdit'),ta=$('editText');
+ // Keep the caret, text and wrapping within the exact screen rectangle of the memo.
+ editor.style.left=((n.x-camera.x)*z)+'px';
+ editor.style.top=((n.y-camera.y)*z)+'px';
+ editor.style.width=(n.w*z)+'px';
+ editor.style.height=(n.h*z)+'px';
+ ta.style.fontSize=(n.fs*z)+'px';
+ ta.style.lineHeight=(n.fs*1.35*z)+'px';
+ ta.style.fontFamily="system-ui,-apple-system,'Malgun Gothic',sans-serif";
+ const count=textLines(ta.value,n.w-22,n.fs).length;
+ const blockHeight=count*n.fs*1.35;
+ const topPad=Math.max(3,(n.h-blockHeight)/2)*z;
+ ta.style.padding=`${topPad}px ${11*z}px ${4*z}px`;
+}
+function openEditor(id,selectAll=false){
+ const n=doc.nodes.find(t=>t.id===id);if(!n)return;
+ finishEdit(true);editId=id;editOriginal=n.text;
+ const editor=$('textEdit'),ta=$('editText');ta.value=n.text;
+ editor.style.display='block';positionEditor();renderNodes();
+ ta.focus({preventScroll:true});
+ if(selectAll)ta.select();else ta.setSelectionRange(ta.value.length,ta.value.length);
+}
+function finishEdit(save){
+ if(!editId)return;
+ const id=editId,raw=$('editText').value,was=editOriginal;
+ editId=null;$('textEdit').style.display='none';
+ if(save&&raw!==was){const before=JSON.stringify(doc),n=doc.nodes.find(t=>t.id===id);
+  if(n){n.text=raw;n.h=Math.max(n.h,Math.ceil(nodeHeightFit(n,raw)));history(before);render();return;}
+ }
+ renderNodes();
+}
+function download(name,contents,mime){const blob=contents instanceof Blob?contents:new Blob([contents],{type:mime});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000);}
+function svgExport(){finishEdit(true);const b=contentBounds(),copy=svg.cloneNode(true);copy.querySelector('#overlay-layer')?.remove();copy.setAttribute('width',b.w);copy.setAttribute('height',b.h);copy.setAttribute('viewBox',`${b.x} ${b.y} ${b.w} ${b.h}`);copy.setAttribute('xmlns','http://www.w3.org/2000/svg');copy.removeAttribute('class');
+ const bg=document.createElementNS('http://www.w3.org/2000/svg','rect');for(const [key,val] of Object.entries({x:b.x,y:b.y,width:b.w,height:b.h,fill:'#fff'}))bg.setAttribute(key,val);copy.insertBefore(bg,copy.querySelector('#background-layer'));
+ return '<?xml version="1.0" encoding="UTF-8"?>\n'+new XMLSerializer().serializeToString(copy);}
+async function pngExport(){const source=svgExport(),blob=new Blob([source],{type:'image/svg+xml;charset=utf-8'}),url=URL.createObjectURL(blob);try{const img=new Image();img.src=url;await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;});const b=contentBounds(),canvas=document.createElement('canvas');canvas.width=b.w*2;canvas.height=b.h*2;const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);const png=await new Promise((res,rej)=>canvas.toBlob(b=>b?res(b):rej(new Error('PNG 변환 실패')),'image/png'));download('PBT_curve_map.png',png,'image/png');}catch(err){alert('PNG 저장 중 오류가 발생했습니다. SVG 저장을 사용해 주세요.\n'+err.message);}finally{URL.revokeObjectURL(url);}}
+function sanitizeImport(o){if(!o||!Array.isArray(o.nodes)||!Array.isArray(o.edges))throw Error('PBT 도식 JSON 파일이 아닙니다.');if(o.nodes.length>1500||o.edges.length>5000)throw Error('너무 큰 파일입니다.');const used=new Set(),nodes=o.nodes.map(n=>{
+ if(!n||typeof n.id!=='string')throw Error('메모 형식이 잘못되었습니다.');let id=n.id.replace(/[^a-zA-Z0-9_-]/g,'').slice(0,50);if(!id||used.has(id))throw Error('메모 ID가 잘못되었습니다.');used.add(id);return{id,x:clamp(Number(n.x)||0,-20000,20000),y:clamp(Number(n.y)||0,-20000,20000),w:clamp(Number(n.w)||180,90,900),h:clamp(Number(n.h)||90,55,900),text:String(n.text??'').slice(0,3000),fs:clamp(Number(n.fs)||17,10,40)};
+ });const existing=new Set(nodes.map(n=>n.id));const anchor=a=>a&&Number.isFinite(Number(a.x))&&Number.isFinite(Number(a.y))?{x:clamp(Number(a.x),0,1),y:clamp(Number(a.y),0,1)}:undefined;
+ const edges=o.edges.filter(e=>e&&existing.has(e.from)&&existing.has(e.to)).map(e=>({id:uid(),from:e.from,to:e.to,o1:{x:clamp(Number(e.o1?.x)||0,-10000,10000),y:clamp(Number(e.o1?.y)||0,-10000,10000)},o2:{x:clamp(Number(e.o2?.x)||0,-10000,10000),y:clamp(Number(e.o2?.y)||0,-10000,10000)},direction:['forward','both','none'].includes(e.direction)?e.direction:'forward',dash:!!e.dash,...(anchor(e.fromAnchor)?{fromAnchor:anchor(e.fromAnchor)}:{}),...(anchor(e.toAnchor)?{toAnchor:anchor(e.toAnchor)}:{})}));return{version:1,nodes,edges,zones:Array.from({length:9},(_,i)=>String(o.zones?.[i]??INITIAL_ZONES[i]).slice(0,60)),showZones:o.showZones!==false,showGrid:!!o.showGrid};}
+
+// Mouse, pen and touch interactions. Control points are attached to the endpoints,
+// so a curve remains attached when its memo is moved or resized.
+svg.addEventListener('pointerdown',e=>{
+ if(e.button!==0&&e.button!==1)return;
+ if(editId)finishEdit(true);
+ if(e.pointerType==='touch'){
+  pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pointers.size===2){drag=null;const ps=[...pointers.values()],mx=(ps[0].x+ps[1].x)/2,my=(ps[0].y+ps[1].y)/2;pinch={startDist:Math.hypot(ps[0].x-ps[1].x,ps[0].y-ps[1].y),z:camera.z,point:worldAt(mx,my)};svg.setPointerCapture(e.pointerId);return;}
+ }
+ const target=e.target.closest('[data-kind]'),kind=target?.dataset.kind,id=target?.dataset.id,p=worldAt(e.clientX,e.clientY);
+ if(mode==='pan'||spaceHeld||e.button===1){drag={type:'pan',lastX:e.clientX,lastY:e.clientY};svg.setPointerCapture(e.pointerId);svg.classList.add('is-dragging');return;}
+ if(mode==='note'){
+  e.preventDefault(); // Keep focus in the inline editor opened by this click.
+  if(kind!=='node'&&kind!=='resize'&&kind!=='control')newNode(p);
+  return;
+ }
+ if(mode==='connect'){
+  if(kind==='node'){
+   if(!connectFrom){connectFrom=id;selection={nodes:[id],edge:null};renderOverlay();renderInspector();hint();}
+   else newEdge(connectFrom,id);
+  }
+  return;
+ }
+ if(kind==='resize'){
+  if(!selection.nodes.includes(id))selectNode(id);
+  drag={type:'resize',id,start:p,sizes:selection.nodes.map(v=>{const n=doc.nodes.find(t=>t.id===v);return{id:v,w:n.w,h:n.h};}),before:JSON.stringify(doc)};
+ }else if(kind==='control'){
+  if(selection.edge!==id)selectEdge(id);drag={type:'control',id,h:target.dataset.handle,before:JSON.stringify(doc)};
+ }else if(kind==='endpoint'){
+  if(selection.edge!==id)selectEdge(id);
+  drag={type:'endpoint',id,h:target.dataset.handle,preview:p,hoverId:null,before:JSON.stringify(doc)};
+ }else if(kind==='node'){
+  selectNode(id,e.shiftKey);
+  if(!e.shiftKey&&selection.nodes.includes(id)){drag={type:'nodes',start:p,startClientX:e.clientX,startClientY:e.clientY,captured:false,hoverId:null,origin:selection.nodes.map(v=>{const n=doc.nodes.find(t=>t.id===v);return{id:v,x:n.x,y:n.y};}),before:JSON.stringify(doc)};}
+ }else if(kind==='edge'){
+  selectEdge(id);
+ }else{
+  if(!e.shiftKey)clearSel();
+  drag={type:'marquee',start:p,current:p,startClientX:e.clientX,startClientY:e.clientY,base:selection.nodes.slice()};
+  renderOverlay();renderInspector();hint();
+ }
+ // Do not capture simple node clicks: SVG capture would suppress native double-click.
+ if(drag){if(drag.type!=='nodes')svg.setPointerCapture(e.pointerId);svg.classList.add('is-dragging');}
+});
+svg.addEventListener('pointermove',e=>{
+ if(e.pointerType==='touch'&&pointers.has(e.pointerId))pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(pinch&&pointers.size>=2){const ps=[...pointers.values()];const d=Math.max(1,Math.hypot(ps[0].x-ps[1].x,ps[0].y-ps[1].y)),mx=(ps[0].x+ps[1].x)/2,my=(ps[0].y+ps[1].y)/2,r=svg.getBoundingClientRect();camera.z=clamp(pinch.z*d/Math.max(1,pinch.startDist),.18,3.6);camera.x=pinch.point.x-(mx-r.left)/camera.z;camera.y=pinch.point.y-(my-r.top)/camera.z;updateView();return;}
+ if(!drag)return;
+ if(drag.type==='nodes'&&!drag.captured){
+  if(Math.hypot(e.clientX-drag.startClientX,e.clientY-drag.startClientY)<=4)return;
+  svg.setPointerCapture(e.pointerId);drag.captured=true;
+ }
+ if(drag.type==='pan'){camera.x-=(e.clientX-drag.lastX)/camera.z;camera.y-=(e.clientY-drag.lastY)/camera.z;drag.lastX=e.clientX;drag.lastY=e.clientY;updateView();return;}
+ const p=worldAt(e.clientX,e.clientY);
+ if(drag.type==='marquee'){
+  if(Math.hypot(e.clientX-drag.startClientX,e.clientY-drag.startClientY)<=4&&!drag.moved)return;
+  drag.moved=true;drag.current=p;renderOverlay();return;
+ }
+ drag.moved=true;
+ if(drag.type==='nodes'){
+  const dx=p.x-drag.start.x,dy=p.y-drag.start.y;
+  for(const o of drag.origin){const n=doc.nodes.find(t=>t.id===o.id);if(n){n.x=Math.round(o.x+dx);n.y=Math.round(o.y+dy);}}
+  drag.hoverId=null;
+  if(drag.origin.length===1){const moving=doc.nodes.find(n=>n.id===drag.origin[0].id),dest=moving&&dropTarget(moving,p);drag.hoverId=dest?.id??null;}
+ }
+ if(drag.type==='resize'){
+  const dx=p.x-drag.start.x,dy=p.y-drag.start.y;
+  for(const o of drag.sizes){const n=doc.nodes.find(t=>t.id===o.id);if(n){n.w=Math.round(clamp(o.w+dx,90,900));n.h=Math.round(clamp(o.h+dy,55,900));}}
+ }
+ if(drag.type==='control'){const ed=doc.edges.find(t=>t.id===drag.id),g=ed&&geom(ed);if(ed&&g){const anch=drag.h==='1'?g.p0:g.p3;ed['o'+drag.h]={x:Math.round(p.x-anch.x),y:Math.round(p.y-anch.y)};}}
+ if(drag.type==='endpoint'){drag.preview=p;const edge=doc.edges.find(t=>t.id===drag.id);drag.hoverId=edge?(endpointTarget(p,edge,drag.h)?.id??null):null;}
+ renderCanvas();
+});
+function stopPointer(e,cancel=false){
+ if(e.pointerType==='touch'){pointers.delete(e.pointerId);if(pointers.size<2)pinch=null;}
+ const d=drag;drag=null;svg.classList.remove('is-dragging');
+ if(!d)return;
+ if(d.type==='marquee'){
+  if(d.moved&&!cancel){
+   const x1=Math.min(d.start.x,d.current.x),x2=Math.max(d.start.x,d.current.x),y1=Math.min(d.start.y,d.current.y),y2=Math.max(d.start.y,d.current.y);
+   const hits=doc.nodes.filter(n=>{const w=Math.max(0,Math.min(x2,n.x+n.w)-Math.max(x1,n.x)),h=Math.max(0,Math.min(y2,n.y+n.h)-Math.max(y1,n.y));return w*h>0;}).map(n=>n.id);
+   selection={nodes:[...new Set([...d.base,...hits])],edge:null};
+  }
+  renderOverlay();renderInspector();hint();return;
+ }
+ if(d.type==='nodes'&&d.moved&&d.origin.length===1&&!cancel){
+  const source=doc.nodes.find(n=>n.id===d.origin[0].id);
+  const pos=worldAt(e.clientX,e.clientY);
+  const target=source&&dropTarget(source,pos);
+  if(target){
+   // Snap the dragged memo back to its starting position: the gesture creates a connection,
+   // rather than obscuring the destination memo underneath the dragged one.
+   source.x=d.origin[0].x;source.y=d.origin[0].y;
+   // Drag/drop toggles the *ordered* connection. B→A stays intact when A→B is deleted.
+   const linked=doc.edges.some(link=>link.from===source.id&&link.to===target.id);
+   if(linked){
+    // Also clear duplicates made previously with the manual arrow tool.
+    doc.edges=doc.edges.filter(link=>!(link.from===source.id&&link.to===target.id));
+    selection={nodes:[source.id],edge:null};
+   }else{
+    const edge={id:uid(),from:source.id,to:target.id,o1:{x:0,y:0},o2:{x:0,y:0},direction:'forward',dash:false};
+    doc.edges.push(edge);autoCurve(edge,20);
+    selection={nodes:[],edge:edge.id};
+   }
+   history(d.before);render();return;
+  }
+ }
+ if(d.type==='endpoint'&&d.moved&&!cancel){
+  const ed=doc.edges.find(t=>t.id===d.id),p=worldAt(e.clientX,e.clientY);
+  const target=ed&&endpointTarget(p,ed,d.h);
+  if(ed&&target){
+   const sameNode=ed[d.h]===target.id;
+   ed[d.h]=target.id;
+   const anchor=nearestAnchor(target,p);
+   // For a new target, dropping near the center keeps the usual automatic side.
+   // For the current memo, the gesture explicitly sets the anchor side.
+   if(sameNode||anchor.distance<=24)ed[d.h+'Anchor']={x:anchor.x,y:anchor.y};
+   else delete ed[d.h+'Anchor'];
+  }
+ }
+ if(cancel&&d.before&&d.moved)doc=JSON.parse(d.before);
+ else if(d.before&&d.moved)history(d.before);
+ if(d.moved||cancel)render();else renderOverlay();
+}
+svg.addEventListener('pointerup',e=>{const moved=!!drag?.moved;stopPointer(e);if(e.pointerType==='touch'&&!moved){
+ const target=e.target.closest('[data-kind]');if(target?.dataset.kind==='node'&&mode==='select'){
+  const now=Date.now();if(lastTap&&lastTap.id===target.dataset.id&&now-lastTap.time<360)openEditor(target.dataset.id);lastTap={id:target.dataset.id,time:now};
+ }
+}});
+svg.addEventListener('pointercancel',e=>stopPointer(e,true));
+svg.addEventListener('dblclick',e=>{const target=e.target.closest('[data-kind]');if(target?.dataset.kind==='node')openEditor(target.dataset.id);else if(!target&&mode==='select')newNode(worldAt(e.clientX,e.clientY));});
+svg.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.clientX,e.clientY,camera.z*Math.exp(-e.deltaY*.0012));},{passive:false});
+svg.addEventListener('contextmenu',e=>e.preventDefault());
+
+document.querySelectorAll('[data-mode]').forEach(btn=>btn.addEventListener('click',()=>setMode(btn.dataset.mode)));
+$('undoBtn').onclick=undo;$('redoBtn').onclick=redo;$('fitBtn').onclick=fit;
+$('zoomIn').onclick=()=>zoomCenter(1.2);$('zoomOut').onclick=()=>zoomCenter(1/1.2);
+$('sidebarToggle').onclick=()=>{$('sidebar').classList.toggle('open');$('sidebarToggle').textContent=$('sidebar').classList.contains('open')?'✕ 닫기':'⚙ 설정';};
+$('saveBtn').onclick=()=>{finishEdit(true);download('PBT_curve_map.json',JSON.stringify(doc,null,2),'application/json;charset=utf-8');};
+$('openBtn').onclick=()=>{$('fileInput').value='';$('fileInput').click();};
+$('fileInput').addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f)return;try{const d=sanitizeImport(JSON.parse(await f.text()));mutate(()=>{doc=d;clearSel();});fit();}catch(err){alert('파일을 불러올 수 없습니다.\n'+err.message);}});
+$('svgBtn').onclick=()=>download('PBT_curve_map.svg',svgExport(),'image/svg+xml;charset=utf-8');
+$('pngBtn').onclick=pngExport;
+$('newBtn').onclick=()=>{if(!confirm('현재 도식을 비우고 새 문서를 만들까요? 이전 상태는 실행 취소로 복구할 수 있습니다.'))return;mutate(()=>{doc=emptyDoc();clearSel();});fit();};
+$('exampleBtn').onclick=()=>{if(doc.nodes.length&&!confirm('현재 도식을 예제로 교체할까요?'))return;mutate(()=>{doc=addSample();clearSel();});fit();};
+$('showZones').addEventListener('change',e=>mutate(()=>{doc.showZones=e.target.checked;}));
+$('showGrid').addEventListener('change',e=>mutate(()=>{doc.showGrid=e.target.checked;}));
+$('zoneNamesBtn').onclick=()=>{$('zoneFields').innerHTML=doc.zones.map((t,i)=>`<label>${i+1}번 영역<input data-zone="${i}" maxlength="60" value="${esc(t)}" /></label>`).join('');$('zoneDialog').style.display='flex';};
+$('zoneCancel').onclick=()=>{$('zoneDialog').style.display='none';};
+$('zoneDialog').addEventListener('pointerdown',e=>{if(e.target===$('zoneDialog'))$('zoneDialog').style.display='none';});
+$('zoneApply').onclick=()=>{const vals=[...$('zoneFields').querySelectorAll('input')].map(i=>i.value);$('zoneDialog').style.display='none';mutate(()=>{doc.zones=vals;});};
+$('editText').addEventListener('input',positionEditor);
+$('editText').addEventListener('blur',()=>finishEdit(true));
+$('editText').addEventListener('keydown',e=>{
+ if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();finishEdit(true);}
+ if(e.key==='Escape'){e.preventDefault();finishEdit(false);}
+});
+$('inspector').addEventListener('change',e=>{
+ const n=selection.nodes.length===1?doc.nodes.find(t=>t.id===selection.nodes[0]):null;
+ const ed=selection.edge?doc.edges.find(t=>t.id===selection.edge):null;
+ if(n&&['insText','insWidth','insHeight','insFont'].includes(e.target.id))mutate(()=>{
+  if(e.target.id==='insText'){n.text=e.target.value;n.h=Math.max(n.h,Math.ceil(nodeHeightFit(n)));}
+  if(e.target.id==='insWidth')n.w=clamp(Number(e.target.value)||n.w,90,900);
+  if(e.target.id==='insHeight')n.h=clamp(Number(e.target.value)||n.h,55,900);
+  if(e.target.id==='insFont'){n.fs=clamp(Number(e.target.value)||n.fs,10,40);n.h=Math.max(n.h,Math.ceil(nodeHeightFit(n)));}
+ });
+ if(selection.nodes.length>1&&['insBatchWidth','insBatchHeight','insBatchFont'].includes(e.target.id)&&e.target.value.trim()!==''){
+  const value=Number(e.target.value);if(!Number.isFinite(value))return;
+  const key=({insBatchWidth:'w',insBatchHeight:'h',insBatchFont:'fs'})[e.target.id];
+  const min=key==='w'?90:key==='h'?55:10,max=key==='fs'?40:900;
+  mutate(()=>{for(const node of doc.nodes){if(selection.nodes.includes(node.id))node[key]=Math.round(clamp(value,min,max));}});
+ }
+ if(ed&&['insDir','insDash','insFrom','insTo'].includes(e.target.id))mutate(()=>{
+  if(e.target.id==='insDir')ed.direction=e.target.value;
+  if(e.target.id==='insDash')ed.dash=e.target.checked;
+  if(e.target.id==='insFrom'){ed.from=e.target.value;delete ed.fromAnchor;}
+  if(e.target.id==='insTo'){ed.to=e.target.value;delete ed.toAnchor;}
+ });
+});
+$('inspector').addEventListener('click',e=>{const btn=e.target.closest('[data-ins-action]');if(!btn)return;const action=btn.dataset.insAction;
+ if(action==='delete'){deleteSelection();return;}
+ if(action==='duplicate'){duplicateSelected();return;}
+ if(action==='edit'){if(selection.nodes[0])openEditor(selection.nodes[0]);return;}
+ const ed=doc.edges.find(t=>t.id===selection.edge);if(!ed)return;
+ if(action==='straight')mutate(()=>straight(ed));
+ if(action==='curve')mutate(()=>autoCurve(ed,55));
+ if(action==='reverse')mutate(()=>{const before=geom(ed),oldFrom=ed.from,oldFromAnchor=ed.fromAnchor,oldToAnchor=ed.toAnchor;
+  ed.from=ed.to;ed.to=oldFrom;
+  if(oldToAnchor)ed.fromAnchor=oldToAnchor;else delete ed.fromAnchor;
+  if(oldFromAnchor)ed.toAnchor=oldFromAnchor;else delete ed.toAnchor;
+  const after=geom(ed);if(before&&after){ed.o1={x:before.c2.x-after.p0.x,y:before.c2.y-after.p0.y};ed.o2={x:before.c1.x-after.p3.x,y:before.c1.y-after.p3.y};}
+ });
+});
+window.addEventListener('keydown',e=>{
+ const inp=e.target.closest('input,textarea,select,[contenteditable]');if(inp)return;
+ const key=e.key.toLowerCase(),meta=e.ctrlKey||e.metaKey;
+ if(meta&&key==='z'){e.preventDefault();e.shiftKey?redo():undo();return;}
+ if(meta&&key==='y'){e.preventDefault();redo();return;}
+ if(meta&&key==='s'){e.preventDefault();$('saveBtn').click();return;}
+ if(meta&&key==='d'){e.preventDefault();duplicateSelected();return;}
+ if(meta&&key==='a'){e.preventDefault();selection={nodes:doc.nodes.map(n=>n.id),edge:null};renderOverlay();renderInspector();hint();return;}
+ if(e.key==='Delete'||e.key==='Backspace'){e.preventDefault();deleteSelection();return;}
+ if(e.key==='Escape'){connectFrom=null;clearSel();setMode('select');render();return;}
+ if(e.code==='Space'&&!e.repeat){e.preventDefault();spaceHeld=true;return;}
+ if(meta||e.altKey)return;
+ if(key==='v')setMode('select');if(key==='n')setMode('note');if(key==='c')setMode('connect');if(key==='h')setMode('pan');
+});
+window.addEventListener('keyup',e=>{if(e.code==='Space')spaceHeld=false;});
+window.addEventListener('blur',()=>{spaceHeld=false;});
+window.addEventListener('resize',updateView);
+try{const s=localStorage.getItem('pbt-curve-map-v1');doc=s?sanitizeImport(JSON.parse(s)):addSample();}catch(err){doc=addSample();}
+render();requestAnimationFrame(fit);
+})();
+</script>
+</body>
+</html>
