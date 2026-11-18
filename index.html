@@ -4,21 +4,38 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="color-scheme" content="light" />
-<title>PBT Curve Map — 자유 곡선 사례개념화 편집기 (v7)</title>
+<title>PBT Curve Map — 자유 곡선 사례개념화 편집기 (v1.6)</title>
 <style>
 :root{--ui-scale:1.3;--sidebar-width:clamp(266px,calc(266px * var(--ui-scale)),480px);font-family:system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:#171717;background:#ececec;font-synthesis:none}
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden}
 button,input,textarea,select{font:inherit}button{cursor:pointer}
 #app{height:100dvh;display:flex;flex-direction:column;min-height:0}
 .top{flex:none;background:#fff;border-bottom:1px solid #c8c8c8;z-index:12}
-.topline{display:flex;align-items:center;gap:12px;padding:10px 16px 9px;min-height:54px}
-.brand{font-size:calc(17px * var(--ui-scale));font-weight:800;white-space:nowrap;letter-spacing:-.6px}
+/* 상단 메뉴: 좌측 편집 / 우측 문서. 기존 편집 화면은 영향받지 않음 */
+.topline{display:flex;align-items:center;gap:14px;padding:10px 16px 9px;min-height:54px}
+.brand{font-size:calc(17px * var(--ui-scale));font-weight:800;white-space:nowrap;letter-spacing:-.6px;flex:none}
 .brand small{display:block;font-size:calc(10px * var(--ui-scale));color:#777;font-weight:500;letter-spacing:.1px}
-.top-actions{display:flex;gap:6px;align-items:center;overflow:auto;scrollbar-width:thin;flex:1;padding:1px 1px 3px}
+.toolbar-main{display:flex;align-items:center;justify-content:space-between;gap:16px;flex:1;min-width:0}
+.top-actions{display:flex;align-items:center;gap:6px;flex:none}
+.top-actions-left{justify-content:flex-start}
+.top-actions-right{justify-content:flex-end;margin-left:auto}
 .sep{height:24px;width:1px;background:#ddd;flex:none;margin:0 3px}
+.toolbar-menu{position:relative;flex:none}
+.toolbar-menu>summary{list-style:none;display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;color:#202020;background:#fff;border:1px solid #cecece;border-radius:6px;padding:7px 10px;font-size:calc(12px * var(--ui-scale));font-weight:600;white-space:nowrap;transition:background .12s,border-color .12s}
+.toolbar-menu>summary::-webkit-details-marker{display:none}
+.toolbar-menu>summary:hover,.toolbar-menu[open]>summary{background:#f2f2f2;border-color:#999}
+.toolbar-menu>summary:focus-visible{outline:2px solid #555;outline-offset:2px}
+.toolbar-menu-items{position:absolute;top:calc(100% + 6px);right:0;z-index:25;min-width:calc(145px * var(--ui-scale));padding:5px;background:#fff;border:1px solid #c7c7c7;border-radius:8px;box-shadow:0 8px 22px #0002;display:flex;flex-direction:column;gap:3px}
+.toolbar-menu-items button{border:0;text-align:left;border-radius:5px;width:100%;font-weight:550;padding:9px 11px}
+.toolbar-menu-items button:hover{background:#eee}
 button{color:#202020;background:#fff;border:1px solid #cecece;border-radius:6px;padding:7px 10px;font-size:calc(12px * var(--ui-scale));font-weight:600;white-space:nowrap;transition:background .12s,border-color .12s}
 button:hover{background:#f2f2f2;border-color:#999}button:focus-visible{outline:2px solid #555;outline-offset:2px}
 button.active,button.primary{background:#202020;border-color:#202020;color:white}button.active:hover,button.primary:hover{background:#444}
+/* 강조하기는 선택/해제 상태 모두 선명한 붉은색 톤을 유지합니다. */
+button.highlight-btn{background:#bd2733;color:#fff;border-color:#a3202b;font-weight:800}
+button.highlight-btn:hover{background:#a31d29;border-color:#851923}
+button.highlight-btn.active{background:#851622;border-color:#6f101a;color:#fff}
+button.highlight-btn.active:hover{background:#70121b}
 button:disabled{cursor:not-allowed;opacity:.35}button.iconbtn{width:calc(34px * var(--ui-scale));min-width:34px;padding:7px 0;text-align:center}
 #sidebarToggle{display:none;margin-left:auto}
 .area{display:flex;flex:1;min-height:0;position:relative}
@@ -58,7 +75,6 @@ hr{border:0;border-top:1px solid #e7e7e7;margin:16px 0}
 #paper .drop-highlight{fill:none;stroke:#111;stroke-width:3;stroke-dasharray:9 4;pointer-events:none}
 #paper .marquee{fill:#777;fill-opacity:.1;stroke:#222;stroke-dasharray:7 4;stroke-width:1.6;pointer-events:none}
 #paper .paper-outline{fill:none;stroke:#a0a0a0;stroke-width:1.4;pointer-events:none}
-#stageHint{position:absolute;left:12px;bottom:12px;background:rgba(255,255,255,.93);padding:8px 11px;border-radius:5px;font-size:calc(11px * var(--ui-scale));color:#555;max-width:calc(100% - 24px);pointer-events:none;border:1px solid #d3d3d3}
 /* The editing surface sits directly over the SVG memo; no floating dialog. */
 #paper [data-kind=node].editing text{visibility:hidden}
 #textEdit{position:absolute;display:none;z-index:6;background:transparent;border:0;box-shadow:none;padding:0;pointer-events:none}
@@ -72,8 +88,11 @@ hr{border:0;border-top:1px solid #e7e7e7;margin:16px 0}
 .zoneFields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.zoneFields label{font-size:calc(11px * var(--ui-scale));color:#777}.zoneFields input{width:100%;border:1px solid #bbb;padding:8px 6px;border-radius:4px;font-size:calc(12px * var(--ui-scale));margin-top:5px}
 .dialogBtns{display:flex;justify-content:flex-end;gap:7px;margin-top:18px}
 .fileinput{display:none}
-@media(max-width:920px){.topline{flex-wrap:wrap;gap:5px;padding:8px}.brand{font-size:calc(15px * var(--ui-scale));margin:0 5px}.brand small{font-size:calc(9px * var(--ui-scale))}.top-actions{order:3;width:100%;flex-basis:100%;gap:4px}.top-actions button{padding:7px 9px}.side{position:absolute;top:0;bottom:0;left:0;box-shadow:8px 0 25px #0002;transform:translateX(-105%);transition:transform .16s}.side.open{transform:translateX(0)}#sidebarToggle{display:block}.topline{min-height:0}}
-@media(max-width:480px){.brand small{display:none}.bottom{font-size:calc(10px * var(--ui-scale))}#stageHint{font-size:calc(10px * var(--ui-scale));left:6px;bottom:7px;padding:6px 8px}.zoneFields{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:1150px){.topline{flex-wrap:wrap;gap:6px;padding:8px}.brand{font-size:calc(15px * var(--ui-scale));margin:0 5px}.brand small{font-size:calc(9px * var(--ui-scale))}.toolbar-main{order:3;flex:1 0 100%;width:100%;gap:8px}.top-actions{gap:4px}.top-actions button{padding:7px 9px}#sidebarToggle{margin-left:auto;order:2}}
+@media(max-width:920px){.side{position:absolute;top:0;bottom:0;left:0;box-shadow:8px 0 25px #0002;transform:translateX(-105%);transition:transform .16s}.side.open{transform:translateX(0)}#sidebarToggle{display:block}.topline{min-height:0}}
+@media(max-width:720px){.toolbar-main{flex-wrap:wrap;justify-content:flex-start}.top-actions-left{flex-wrap:wrap}.top-actions-right{width:100%;margin-left:0;justify-content:flex-end;flex-wrap:wrap}}
+
+@media(max-width:480px){.brand small{display:none}.bottom{font-size:calc(10px * var(--ui-scale))}.zoneFields{grid-template-columns:repeat(2,1fr)}}
 
 /* 모든 사용자에게 동일한 130% UI 가독성 설정 적용 */
 @media(max-width:920px){.side{width:min(90vw,var(--sidebar-width));max-width:90vw;flex-basis:auto}}
@@ -85,22 +104,36 @@ hr{border:0;border-top:1px solid #e7e7e7;margin:16px 0}
 <header class="top">
  <div class="topline">
   <div class="brand">PBT Curve Map <small>자유 곡선 사례개념화 편집기 · 오프라인</small></div>
-  <div class="top-actions">
-   <button data-mode="select" class="active" title="선택하고 메모를 옮깁니다 (V)">↖ 선택</button>
-   <button data-mode="note" title="빈 곳을 눌러 메모를 생성합니다 (N)">＋ 메모</button>
-   <button data-mode="connect" title="출발 메모 → 도착 메모 순서로 클릭합니다 (C)">↝ 화살표</button>
-   <button data-mode="pan" title="캔버스를 끌어 이동합니다 (H)">✋ 이동</button>
-   <span class="sep"></span>
-   <button class="iconbtn" id="undoBtn" title="실행 취소 (Ctrl+Z)">↶</button>
-   <button class="iconbtn" id="redoBtn" title="다시 실행 (Ctrl+Shift+Z)">↷</button>
-   <button id="fitBtn" title="도식 전체가 보이도록 맞춥니다">전체 보기</button>
-   <span class="sep"></span>
-   <button id="newBtn">새 문서</button>
-   <button id="exampleBtn">예제</button>
-   <button id="saveBtn" title="편집 가능한 JSON 파일 저장">저장</button>
-   <button id="openBtn" title="JSON 파일 불러오기">불러오기</button>
-   <button id="svgBtn" title="편집 가능한 벡터 그림 내보내기">SVG</button>
-   <button id="pngBtn" title="고해상도 PNG 그림 내보내기">PNG</button>
+  <div class="toolbar-main">
+   <nav class="top-actions top-actions-left" aria-label="편집 도구">
+    <button data-mode="select" class="active" title="선택하고 메모를 옮깁니다 (V)">선택</button>
+    <button data-mode="note" title="빈 곳을 눌러 메모를 생성합니다 (N)">메모</button>
+    <button data-mode="connect" title="출발 메모 → 도착 메모 순서로 클릭합니다 (C)">연결</button>
+    <button data-mode="pan" title="캔버스를 끌어 이동합니다 (H)">이동</button>
+    <button id="highlightBtn" class="highlight-btn" aria-pressed="false" title="선택한 노드의 테두리와 글씨를 빨갛고 굵게 강조합니다. 다시 누르면 원래대로 돌아갑니다.">강조</button>
+    <span class="sep" aria-hidden="true"></span>
+    <button class="iconbtn" id="undoBtn" title="실행 취소 (Ctrl+Z)" aria-label="실행 취소">↶</button>
+    <button class="iconbtn" id="redoBtn" title="다시 실행 (Ctrl+Shift+Z)" aria-label="다시 실행">↷</button>
+   </nav>
+   <nav class="top-actions top-actions-right" aria-label="문서 및 출력">
+    <button id="fitBtn" title="도식 전체가 보이도록 맞춥니다">전체 보기</button>
+    <button id="saveBtn" title="편집 가능한 JSON 파일 저장">저장</button>
+    <details class="toolbar-menu" id="docMenu">
+     <summary aria-label="문서 메뉴 열기">문서 <span aria-hidden="true">⌄</span></summary>
+     <div class="toolbar-menu-items">
+      <button id="newBtn">새 문서</button>
+      <button id="exampleBtn">영어 예제</button>
+      <button id="openBtn" title="JSON 파일 불러오기">불러오기</button>
+     </div>
+    </details>
+    <details class="toolbar-menu" id="exportMenu">
+     <summary aria-label="출력 메뉴 열기">내보내기 <span aria-hidden="true">⌄</span></summary>
+     <div class="toolbar-menu-items">
+      <button id="svgBtn" title="편집 가능한 벡터 그림 내보내기">SVG 저장</button>
+      <button id="pngBtn" title="고해상도 PNG 그림 내보내기">PNG 저장</button>
+     </div>
+    </details>
+   </nav>
   </div>
   <button id="sidebarToggle" aria-label="편집 설정 열기">⚙ 설정</button>
  </div>
@@ -141,7 +174,6 @@ hr{border:0;border-top:1px solid #e7e7e7;margin:16px 0}
    <g id="nodes-layer"></g>
    <g id="overlay-layer"></g>
   </svg>
-  <div id="stageHint">↖ 선택 모드 · 메모를 드래그하거나 두 번 클릭해 바로 입력하세요.</div>
   <div id="textEdit"><textarea id="editText" spellcheck="false" aria-label="메모 안에서 글 수정" title="바깥 클릭: 저장 · Ctrl+Enter: 완료 · Esc: 취소"></textarea></div>
  </main>
 </div>
@@ -295,7 +327,8 @@ function renderLinks(){layerLinks.innerHTML=doc.edges.map(e=>{
 function renderNodes(){layerNodes.innerHTML=doc.nodes.map(n=>{
  const lines=textLines(n.text,n.w-22,n.fs),height=n.fs*1.35,start=n.y+(n.h-(lines.length-1)*height)/2+ n.fs*.34;
  const s=lines.map((line,i)=>`<tspan x="${n.x+n.w/2}" y="${(start+i*height).toFixed(2)}">${esc(line)}</tspan>`).join('');
- return `<g data-kind="node" data-id="${esc(n.id)}" class="${editId===n.id?'editing':''}"><rect class="node-rect" x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" fill="#fff" stroke="#161616" stroke-width="1.8"/><text text-anchor="middle" font-family="system-ui,-apple-system,'Malgun Gothic',sans-serif" font-size="${n.fs}" fill="#111" font-weight="400">${s}</text></g>`;
+ const emphasized=!!n.highlighted,ink=emphasized?'#b4232d':'#161616';
+ return `<g data-kind="node" data-id="${esc(n.id)}" class="${editId===n.id?'editing':''}"><rect class="node-rect" x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" style="fill:#fff;stroke:${ink};stroke-width:${emphasized?'2.8':'1.8'}"/><text text-anchor="middle" font-family="system-ui,-apple-system,'Malgun Gothic',sans-serif" font-size="${n.fs}" fill="${emphasized?'#b4232d':'#111'}" font-weight="${emphasized?'750':'400'}">${s}</text></g>`;
 }).join('');}
 function findNodeAt(p,excludeId=null){
  // Reverse order matches the visually topmost memo on the canvas.
@@ -371,11 +404,13 @@ function updateView(){
  if(editId)positionEditor();
 }
 function hint(){
- const msgs={select:'↖ 노드 겹치기: 연결·삭제 · ● 끝점 · ○ 곡선 · Shift+클릭: 다중 선택',note:'＋ 메모: 빈 공간을 클릭해 새 메모를 만드세요',connect:connectFrom?'↝ 연결: 도착할 메모를 클릭하세요 (같은 메모 선택 시 순환 화살표)':'↝ 연결: 출발할 메모를 먼저 클릭하세요',pan:'✋ 이동: 드래그하여 캔버스를 이동하세요'};
- $('stageHint').textContent=msgs[mode];
  $('info').textContent=`메모 ${doc.nodes.length}개 · 화살표 ${doc.edges.length}개`+(selection.nodes.length?` · 메모 ${selection.nodes.length}개 선택`:'')+(selection.edge?' · 화살표 선택':'');
  $('undoBtn').disabled=!undoStack.length;$('redoBtn').disabled=!redoStack.length;
  document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));
+ const selected=doc.nodes.filter(n=>selection.nodes.includes(n.id));
+ const allHighlighted=selected.length>0&&selected.every(n=>n.highlighted);
+ $('highlightBtn').classList.toggle('active',allHighlighted);
+ $('highlightBtn').setAttribute('aria-pressed',String(allHighlighted));
  svg.classList.toggle('mode-note',mode==='note');svg.classList.toggle('mode-connect',mode==='connect');svg.classList.toggle('mode-pan',mode==='pan');
  $('showZones').checked=doc.showZones;$('showGrid').checked=doc.showGrid;
 }
@@ -429,6 +464,8 @@ function positionEditor(){
  editor.style.width=(n.w*z)+'px';
  editor.style.height=(n.h*z)+'px';
  ta.style.fontSize=(n.fs*z)+'px';
+ ta.style.color=n.highlighted?'#b4232d':'#111';
+ ta.style.fontWeight=n.highlighted?'750':'400';
  ta.style.lineHeight=(n.fs*1.35*z)+'px';
  ta.style.fontFamily="system-ui,-apple-system,'Malgun Gothic',sans-serif";
  const count=textLines(ta.value,n.w-22,n.fs).length;
@@ -459,7 +496,7 @@ function svgExport(){finishEdit(true);const b=contentBounds(),copy=svg.cloneNode
  return '<?xml version="1.0" encoding="UTF-8"?>\n'+new XMLSerializer().serializeToString(copy);}
 async function pngExport(){const source=svgExport(),blob=new Blob([source],{type:'image/svg+xml;charset=utf-8'}),url=URL.createObjectURL(blob);try{const img=new Image();img.src=url;await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;});const b=contentBounds(),canvas=document.createElement('canvas');canvas.width=b.w*2;canvas.height=b.h*2;const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);const png=await new Promise((res,rej)=>canvas.toBlob(b=>b?res(b):rej(new Error('PNG 변환 실패')),'image/png'));download('PBT_curve_map.png',png,'image/png');}catch(err){alert('PNG 저장 중 오류가 발생했습니다. SVG 저장을 사용해 주세요.\n'+err.message);}finally{URL.revokeObjectURL(url);}}
 function sanitizeImport(o){if(!o||!Array.isArray(o.nodes)||!Array.isArray(o.edges))throw Error('PBT 도식 JSON 파일이 아닙니다.');if(o.nodes.length>1500||o.edges.length>5000)throw Error('너무 큰 파일입니다.');const used=new Set(),nodes=o.nodes.map(n=>{
- if(!n||typeof n.id!=='string')throw Error('메모 형식이 잘못되었습니다.');let id=n.id.replace(/[^a-zA-Z0-9_-]/g,'').slice(0,50);if(!id||used.has(id))throw Error('메모 ID가 잘못되었습니다.');used.add(id);return{id,x:clamp(Number(n.x)||0,-20000,20000),y:clamp(Number(n.y)||0,-20000,20000),w:clamp(Number(n.w)||180,90,900),h:clamp(Number(n.h)||90,55,900),text:String(n.text??'').slice(0,3000),fs:clamp(Number(n.fs)||17,10,40)};
+ if(!n||typeof n.id!=='string')throw Error('메모 형식이 잘못되었습니다.');let id=n.id.replace(/[^a-zA-Z0-9_-]/g,'').slice(0,50);if(!id||used.has(id))throw Error('메모 ID가 잘못되었습니다.');used.add(id);return{id,x:clamp(Number(n.x)||0,-20000,20000),y:clamp(Number(n.y)||0,-20000,20000),w:clamp(Number(n.w)||180,90,900),h:clamp(Number(n.h)||90,55,900),text:String(n.text??'').slice(0,3000),fs:clamp(Number(n.fs)||17,10,40),highlighted:n.highlighted===true};
  });const existing=new Set(nodes.map(n=>n.id));const anchor=a=>a&&Number.isFinite(Number(a.x))&&Number.isFinite(Number(a.y))?{x:clamp(Number(a.x),0,1),y:clamp(Number(a.y),0,1)}:undefined;
  const edges=o.edges.filter(e=>e&&existing.has(e.from)&&existing.has(e.to)).map(e=>({id:uid(),from:e.from,to:e.to,o1:{x:clamp(Number(e.o1?.x)||0,-10000,10000),y:clamp(Number(e.o1?.y)||0,-10000,10000)},o2:{x:clamp(Number(e.o2?.x)||0,-10000,10000),y:clamp(Number(e.o2?.y)||0,-10000,10000)},direction:['forward','both','none'].includes(e.direction)?e.direction:'forward',dash:!!e.dash,...(anchor(e.fromAnchor)?{fromAnchor:anchor(e.fromAnchor)}:{}),...(anchor(e.toAnchor)?{toAnchor:anchor(e.toAnchor)}:{})}));return{version:1,nodes,edges,zones:Array.from({length:9},(_,i)=>String(o.zones?.[i]??INITIAL_ZONES[i]).slice(0,60)),showZones:o.showZones!==false,showGrid:!!o.showGrid};}
 
@@ -597,7 +634,23 @@ svg.addEventListener('dblclick',e=>{const target=e.target.closest('[data-kind]')
 svg.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.clientX,e.clientY,camera.z*Math.exp(-e.deltaY*.0012));},{passive:false});
 svg.addEventListener('contextmenu',e=>e.preventDefault());
 
+// 메뉴에서 실행한 기능은 그대로 유지하면서 메뉴만 자동 닫습니다.
+document.querySelectorAll('.toolbar-menu').forEach(menu=>{
+ menu.addEventListener('click',e=>{
+  if(e.target.closest('.toolbar-menu-items button'))menu.open=false;
+  else if(e.target.closest('summary'))document.querySelectorAll('.toolbar-menu').forEach(other=>{if(other!==menu)other.open=false;});
+ });
+});
+document.addEventListener('pointerdown',e=>{
+ if(!e.target.closest('.toolbar-menu'))document.querySelectorAll('.toolbar-menu').forEach(menu=>{menu.open=false;});
+});
 document.querySelectorAll('[data-mode]').forEach(btn=>btn.addEventListener('click',()=>setMode(btn.dataset.mode)));
+$('highlightBtn').onclick=()=>{
+ if(!selection.nodes.length){$('info').textContent='강조할 노드를 먼저 선택하세요.';return;}
+ const selected=new Set(selection.nodes),target=doc.nodes.filter(n=>selected.has(n.id));
+ const next=!target.every(n=>n.highlighted);
+ mutate(()=>{for(const n of target)n.highlighted=next;});
+};
 $('undoBtn').onclick=undo;$('redoBtn').onclick=redo;$('fitBtn').onclick=fit;
 $('zoomIn').onclick=()=>zoomCenter(1.2);$('zoomOut').onclick=()=>zoomCenter(1/1.2);
 $('sidebarToggle').onclick=()=>{$('sidebar').classList.toggle('open');$('sidebarToggle').textContent=$('sidebar').classList.contains('open')?'✕ 닫기':'⚙ 설정';};
