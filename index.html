@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="color-scheme" content="light" />
-<title>PBT Curve Map — 자유 곡선 사례개념화 편집기 (v1.6)</title>
+<title>PBT Curve Map — 자유 곡선 사례개념화 편집기 (v1.7)</title>
 <style>
 :root{--ui-scale:1.3;--sidebar-width:clamp(266px,calc(266px * var(--ui-scale)),480px);font-family:system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:#171717;background:#ececec;font-synthesis:none}
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden}
@@ -80,8 +80,6 @@ hr{border:0;border-top:1px solid #e7e7e7;margin:16px 0}
 #textEdit{position:absolute;display:none;z-index:6;background:transparent;border:0;box-shadow:none;padding:0;pointer-events:none}
 #textEdit textarea{display:block;width:100%;height:100%;min-height:0;max-height:none;margin:0;resize:none;border:0;outline:0;background:transparent;color:#111;text-align:center;font-weight:400;white-space:pre-wrap;overflow-wrap:break-word;overflow:auto;scrollbar-width:thin;caret-color:#111;pointer-events:auto}
 #textEdit textarea::selection{background:#bcbcbc;color:#111}
-.bottom{flex:none;min-height:31px;display:flex;align-items:center;gap:11px;justify-content:space-between;border-top:1px solid #c9c9c9;background:#fff;padding:5px 12px;font-size:calc(11px * var(--ui-scale));color:#777;white-space:nowrap}
-#info{overflow:hidden;text-overflow:ellipsis}#zoomLabel{font-variant-numeric:tabular-nums}
 .dialogBackdrop{position:fixed;inset:0;background:#0008;display:none;z-index:30;align-items:center;justify-content:center;padding:16px}
 .dialog{background:#fff;max-width:min(calc(500px * var(--ui-scale)),96vw);width:100%;border-radius:9px;border:1px solid #aaa;padding:20px;max-height:88dvh;overflow:auto;box-shadow:0 15px 50px #0004}
 .dialog h2{font-size:calc(17px * var(--ui-scale));margin:0 0 7px}.dialog p{font-size:calc(12px * var(--ui-scale));color:#777;margin:0 0 14px;line-height:1.6}
@@ -92,7 +90,7 @@ hr{border:0;border-top:1px solid #e7e7e7;margin:16px 0}
 @media(max-width:920px){.side{position:absolute;top:0;bottom:0;left:0;box-shadow:8px 0 25px #0002;transform:translateX(-105%);transition:transform .16s}.side.open{transform:translateX(0)}#sidebarToggle{display:block}.topline{min-height:0}}
 @media(max-width:720px){.toolbar-main{flex-wrap:wrap;justify-content:flex-start}.top-actions-left{flex-wrap:wrap}.top-actions-right{width:100%;margin-left:0;justify-content:flex-end;flex-wrap:wrap}}
 
-@media(max-width:480px){.brand small{display:none}.bottom{font-size:calc(10px * var(--ui-scale))}.zoneFields{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:480px){.brand small{display:none}.zoneFields{grid-template-columns:repeat(2,1fr)}}
 
 /* 모든 사용자에게 동일한 130% UI 가독성 설정 적용 */
 @media(max-width:920px){.side{width:min(90vw,var(--sidebar-width));max-width:90vw;flex-basis:auto}}
@@ -105,27 +103,15 @@ hr{border:0;border-top:1px solid #e7e7e7;margin:16px 0}
  <div class="topline">
   <div class="brand">PBT Curve Map <small>자유 곡선 사례개념화 편집기 · 오프라인</small></div>
   <div class="toolbar-main">
-   <nav class="top-actions top-actions-left" aria-label="편집 도구">
-    <button data-mode="select" class="active" title="선택하고 메모를 옮깁니다 (V)">선택</button>
-    <button data-mode="note" title="빈 곳을 눌러 메모를 생성합니다 (N)">메모</button>
-    <button data-mode="connect" title="출발 메모 → 도착 메모 순서로 클릭합니다 (C)">연결</button>
-    <button data-mode="pan" title="캔버스를 끌어 이동합니다 (H)">이동</button>
-    <button id="highlightBtn" class="highlight-btn" aria-pressed="false" title="선택한 노드의 테두리와 글씨를 빨갛고 굵게 강조합니다. 다시 누르면 원래대로 돌아갑니다.">강조</button>
-    <span class="sep" aria-hidden="true"></span>
-    <button class="iconbtn" id="undoBtn" title="실행 취소 (Ctrl+Z)" aria-label="실행 취소">↶</button>
-    <button class="iconbtn" id="redoBtn" title="다시 실행 (Ctrl+Shift+Z)" aria-label="다시 실행">↷</button>
-   </nav>
+    <nav class="top-actions top-actions-left" aria-label="강조 도구">
+     <button id="highlightBtn" class="highlight-btn" aria-pressed="false" title="선택한 노드의 글씨와 테두리를 강조하거나 해제합니다.">강조</button>
+    </nav>
    <nav class="top-actions top-actions-right" aria-label="문서 및 출력">
     <button id="fitBtn" title="도식 전체가 보이도록 맞춥니다">전체 보기</button>
     <button id="saveBtn" title="편집 가능한 JSON 파일 저장">저장</button>
-    <details class="toolbar-menu" id="docMenu">
-     <summary aria-label="문서 메뉴 열기">문서 <span aria-hidden="true">⌄</span></summary>
-     <div class="toolbar-menu-items">
-      <button id="newBtn">새 문서</button>
-      <button id="exampleBtn">예제</button>
-      <button id="openBtn" title="JSON 파일 불러오기">불러오기</button>
-     </div>
-    </details>
+     <button id="newBtn" title="새 도식 작성">새 문서</button>
+     <button id="exampleBtn" title="기본 사례개념화 예제 불러오기">예제</button>
+     <button id="openBtn" title="기존 JSON 파일 불러오기">불러오기</button>
     <details class="toolbar-menu" id="exportMenu">
      <summary aria-label="출력 메뉴 열기">내보내기 <span aria-hidden="true">⌄</span></summary>
      <div class="toolbar-menu-items">
@@ -177,7 +163,7 @@ hr{border:0;border-top:1px solid #e7e7e7;margin:16px 0}
   <div id="textEdit"><textarea id="editText" spellcheck="false" aria-label="메모 안에서 글 수정" title="바깥 클릭: 저장 · Ctrl+Enter: 완료 · Esc: 취소"></textarea></div>
  </main>
 </div>
-<footer class="bottom"><span id="info">준비됨</span><span><span id="zoomLabel">100%</span>　<button id="zoomOut" class="iconbtn" title="축소">−</button> <button id="zoomIn" class="iconbtn" title="확대">＋</button></span></footer>
+
 </div>
 <input class="fileinput" type="file" id="fileInput" accept=".json,application/json" />
 <div class="dialogBackdrop" id="zoneDialog" role="dialog" aria-modal="true" aria-label="PBT 영역 이름 편집"><div class="dialog"><h2>9개 영역 이름 수정</h2><p>행별 왼쪽에서 오른쪽 순서입니다. 배경 영역 이름만 변경합니다.</p><div class="zoneFields" id="zoneFields"></div><div class="dialogBtns"><button id="zoneCancel">취소</button><button class="primary" id="zoneApply">적용</button></div></div></div>
@@ -185,6 +171,7 @@ hr{border:0;border-top:1px solid #e7e7e7;margin:16px 0}
 (() => {
 'use strict';
 const W=1320,H=1110,CW=440,RH=370;
+const DEFAULT_NODE_FONT=20;
 const INITIAL_ZONES=['Attention','Cognition','Self','Affect','Behaviour','Motivation','Biophysiological','Context','Sociocultural'];
 const $=id=>document.getElementById(id);
 const svg=$('paper'), stage=$('stage'), layerBg=$('background-layer'), layerLinks=$('links-layer'), layerNodes=$('nodes-layer'), layerOverlay=$('overlay-layer');
@@ -200,8 +187,18 @@ let undoStack=[],redoStack=[],drag=null,spaceHeld=false,pointers=new Map(),pinch
 const measureCtx=document.createElement('canvas').getContext('2d');
 
 // JSON으로 제공된 사용자 도식을 원본 그대로 기본 예제에 반영합니다.
-const BUILTIN_EXAMPLE={"version":1,"nodes":[{"id":"idmwm6hhp014yzib0","x":531,"y":32,"w":200,"h":91,"text":"높은 기대","fs":17,"highlighted":true},{"id":"idmwm6hl2kj8wjjsv","x":138,"y":501,"w":200,"h":91,"text":"실패에 대한 예기불안","fs":17,"highlighted":false},{"id":"idmwm6hoyki5v7gif","x":533,"y":476,"w":200,"h":91,"text":"회피/미루기","fs":17,"highlighted":false},{"id":"idmwm6hu4d8472jio","x":518,"y":786,"w":200,"h":91,"text":"마감에 쫓기는 상황","fs":17,"highlighted":false},{"id":"idmwm6i3akbhqznst","x":626,"y":199,"w":200,"h":91,"text":"자책","fs":17,"highlighted":false},{"id":"idmwm6ic9oyl33fvv","x":968,"y":35,"w":200,"h":91,"text":"\"게으른 나\"","fs":17,"highlighted":false},{"id":"idmwm6kskczlhrx5e","x":1101,"y":185,"w":200,"h":91,"text":"유능감 저하","fs":17,"highlighted":false},{"id":"idmwm6l4okqo6334s","x":996,"y":498,"w":200,"h":91,"text":"동기저하\n(다시 시작이 어려워짐)","fs":17,"highlighted":false},{"id":"idmwm7yqtfn2g5v2z","x":122,"y":889,"w":200,"h":91,"text":"식은땀, 답답한 느낌","fs":17},{"id":"idmwm7z3eack59o93","x":589,"y":932,"w":200,"h":91,"text":"과제 제출 실패","fs":17},{"id":"idmwm7z9jumkcxxf3","x":962,"y":880,"w":200,"h":91,"text":"교수님/동료들의\n부정적인 평가","fs":17},{"id":"idmwm801mym28u7wv","x":54,"y":164,"w":200,"h":91,"text":"나 자신에 초점","fs":17}],"edges":[{"id":"idmwm7psqjuosyo4z","from":"idmwm6hhp014yzib0","to":"idmwm6hl2kj8wjjsv","o1":{"x":-72,"y":176},"o2":{"x":-8,"y":-209},"direction":"forward","dash":false,"fromAnchor":{"x":0,"y":0.475}},{"id":"idmwm7psqjg1wsdiz","from":"idmwm6hl2kj8wjjsv","to":"idmwm6hoyki5v7gif","o1":{"x":50,"y":37},"o2":{"x":-74,"y":44},"direction":"forward","dash":false},{"id":"idmwm7psqj0lmemj4","from":"idmwm6hoyki5v7gif","to":"idmwm6hu4d8472jio","o1":{"x":-67,"y":111},"o2":{"x":15,"y":-134},"direction":"forward","dash":false},{"id":"idmwm7psqjkqvvw1f","from":"idmwm6i3akbhqznst","to":"idmwm6ic9oyl33fvv","o1":{"x":39,"y":-84},"o2":{"x":-113,"y":-12},"direction":"forward","dash":false,"fromAnchor":{"x":0.488,"y":0},"toAnchor":{"x":0,"y":0.555}},{"id":"idmwm7psqjrolwfsi","from":"idmwm6kskczlhrx5e","to":"idmwm6l4okqo6334s","o1":{"x":21,"y":125},"o2":{"x":-14,"y":-105},"direction":"forward","dash":false},{"id":"idmwm7yzvmwdnsrr9","from":"idmwm6hu4d8472jio","to":"idmwm7yqtfn2g5v2z","o1":{"x":-87.38970746645407,"y":-20.394739747012533},"o2":{"x":87.57029253354591,"y":-19.60485261382964},"direction":"forward","dash":false},{"id":"idmwm7z8iq8tcap0p","from":"idmwm7yqtfn2g5v2z","to":"idmwm7z3eack59o93","o1":{"x":74.43522161204126,"y":27.135458220417476},"o2":{"x":-78.20477838795873,"y":12.686526181582574},"direction":"forward","dash":false},{"id":"idmwm7zif6zm3zwr0","from":"idmwm7z3eack59o93","to":"idmwm7z9jumkcxxf3","o1":{"x":64.37442443115614,"y":12.192049467105765},"o2":{"x":-59.46557556884384,"y":27.505597854202524},"direction":"forward","dash":false},{"id":"idmwm7zy2afcfwbbx","from":"idmwm6l4okqo6334s","to":"idmwm6hoyki5v7gif","o1":{"x":-93.73074702825942,"y":-24.476293962208594},"o2":{"x":95.62925297174057,"y":-15.4786265755996},"direction":"forward","dash":false},{"id":"idmwm806y25fsloan","from":"idmwm7z9jumkcxxf3","to":"idmwm801mym28u7wv","o1":{"x":-91,"y":-418},"o2":{"x":502,"y":128},"direction":"forward","dash":false,"toAnchor":{"x":0.536,"y":1}},{"id":"idmwm80ax6b8masxs","from":"idmwm801mym28u7wv","to":"idmwm6i3akbhqznst","o1":{"x":132.69850831541373,"y":28.15706969678648},"o2":{"x":-135.14149168458624,"y":11.768258507975295},"direction":"forward","dash":false},{"id":"idmwm80hoys0afuv7","from":"idmwm6ic9oyl33fvv","to":"idmwm6kskczlhrx5e","o1":{"x":68,"y":29},"o2":{"x":9,"y":-41},"direction":"forward","dash":false,"fromAnchor":{"x":1,"y":0.467},"toAnchor":{"x":0.591,"y":0}}],"zones":["Attention","Cognition","Self","Affect","Behaviour","Motivation","Biophysiological","Context","Sociocultural"],"showZones":true,"showGrid":false};
+const BUILTIN_EXAMPLE={"version":1,"nodes":[{"id":"idmwm6hhp014yzib0","x":531,"y":32,"w":200,"h":91,"text":"높은 기대","fs":20,"highlighted":true},{"id":"idmwm6hl2kj8wjjsv","x":138,"y":501,"w":200,"h":91,"text":"실패에 대한 예기불안","fs":20,"highlighted":false},{"id":"idmwm6hoyki5v7gif","x":533,"y":476,"w":200,"h":91,"text":"회피/미루기","fs":20,"highlighted":false},{"id":"idmwm6hu4d8472jio","x":518,"y":786,"w":200,"h":91,"text":"마감에 쫓기는 상황","fs":20,"highlighted":false},{"id":"idmwm6i3akbhqznst","x":626,"y":199,"w":200,"h":91,"text":"자책","fs":20,"highlighted":false},{"id":"idmwm6ic9oyl33fvv","x":968,"y":35,"w":200,"h":91,"text":"\"게으른 나\"","fs":20,"highlighted":false},{"id":"idmwm6kskczlhrx5e","x":1101,"y":185,"w":200,"h":91,"text":"유능감 저하","fs":20,"highlighted":false},{"id":"idmwm6l4okqo6334s","x":996,"y":498,"w":200,"h":91,"text":"동기저하\n(다시 시작이 어려워짐)","fs":20,"highlighted":false},{"id":"idmwm7yqtfn2g5v2z","x":122,"y":889,"w":200,"h":91,"text":"식은땀, 답답한 느낌","fs":20},{"id":"idmwm7z3eack59o93","x":589,"y":932,"w":200,"h":91,"text":"과제 제출 실패","fs":20},{"id":"idmwm7z9jumkcxxf3","x":962,"y":880,"w":200,"h":91,"text":"교수님/동료들의\n부정적인 평가","fs":20},{"id":"idmwm801mym28u7wv","x":54,"y":164,"w":200,"h":91,"text":"나 자신에 초점","fs":20}],"edges":[{"id":"idmwm7psqjuosyo4z","from":"idmwm6hhp014yzib0","to":"idmwm6hl2kj8wjjsv","o1":{"x":-72,"y":176},"o2":{"x":-8,"y":-209},"direction":"forward","dash":false,"fromAnchor":{"x":0,"y":0.475}},{"id":"idmwm7psqjg1wsdiz","from":"idmwm6hl2kj8wjjsv","to":"idmwm6hoyki5v7gif","o1":{"x":50,"y":37},"o2":{"x":-74,"y":44},"direction":"forward","dash":false},{"id":"idmwm7psqj0lmemj4","from":"idmwm6hoyki5v7gif","to":"idmwm6hu4d8472jio","o1":{"x":-67,"y":111},"o2":{"x":15,"y":-134},"direction":"forward","dash":false},{"id":"idmwm7psqjkqvvw1f","from":"idmwm6i3akbhqznst","to":"idmwm6ic9oyl33fvv","o1":{"x":39,"y":-84},"o2":{"x":-113,"y":-12},"direction":"forward","dash":false,"fromAnchor":{"x":0.488,"y":0},"toAnchor":{"x":0,"y":0.555}},{"id":"idmwm7psqjrolwfsi","from":"idmwm6kskczlhrx5e","to":"idmwm6l4okqo6334s","o1":{"x":21,"y":125},"o2":{"x":-14,"y":-105},"direction":"forward","dash":false},{"id":"idmwm7yzvmwdnsrr9","from":"idmwm6hu4d8472jio","to":"idmwm7yqtfn2g5v2z","o1":{"x":-87.38970746645407,"y":-20.394739747012533},"o2":{"x":87.57029253354591,"y":-19.60485261382964},"direction":"forward","dash":false},{"id":"idmwm7z8iq8tcap0p","from":"idmwm7yqtfn2g5v2z","to":"idmwm7z3eack59o93","o1":{"x":74.43522161204126,"y":27.135458220417476},"o2":{"x":-78.20477838795873,"y":12.686526181582574},"direction":"forward","dash":false},{"id":"idmwm7zif6zm3zwr0","from":"idmwm7z3eack59o93","to":"idmwm7z9jumkcxxf3","o1":{"x":64.37442443115614,"y":12.192049467105765},"o2":{"x":-59.46557556884384,"y":27.505597854202524},"direction":"forward","dash":false},{"id":"idmwm7zy2afcfwbbx","from":"idmwm6l4okqo6334s","to":"idmwm6hoyki5v7gif","o1":{"x":-93.73074702825942,"y":-24.476293962208594},"o2":{"x":95.62925297174057,"y":-15.4786265755996},"direction":"forward","dash":false},{"id":"idmwm806y25fsloan","from":"idmwm7z9jumkcxxf3","to":"idmwm801mym28u7wv","o1":{"x":-91,"y":-418},"o2":{"x":502,"y":128},"direction":"forward","dash":false,"toAnchor":{"x":0.536,"y":1}},{"id":"idmwm80ax6b8masxs","from":"idmwm801mym28u7wv","to":"idmwm6i3akbhqznst","o1":{"x":132.69850831541373,"y":28.15706969678648},"o2":{"x":-135.14149168458624,"y":11.768258507975295},"direction":"forward","dash":false},{"id":"idmwm80hoys0afuv7","from":"idmwm6ic9oyl33fvv","to":"idmwm6kskczlhrx5e","o1":{"x":68,"y":29},"o2":{"x":9,"y":-41},"direction":"forward","dash":false,"fromAnchor":{"x":1,"y":0.467},"toAnchor":{"x":0.591,"y":0}}],"zones":["Attention","Cognition","Self","Affect","Behaviour","Motivation","Biophysiological","Context","Sociocultural"],"showZones":true,"showGrid":false};
 function addSample(){return clone(BUILTIN_EXAMPLE);}
+
+// 기존 17pt 예제를 수정하지 않고 보관했던 경우에만 새 기본값으로 갱신합니다.
+const LEGACY_17_NODE_SIG=[["idmwm6hhp014yzib0",531,32,200,91,"높은 기대",17,true],["idmwm6hl2kj8wjjsv",138,501,200,91,"실패에 대한 예기불안",17,false],["idmwm6hoyki5v7gif",533,476,200,91,"회피/미루기",17,false],["idmwm6hu4d8472jio",518,786,200,91,"마감에 쫓기는 상황",17,false],["idmwm6i3akbhqznst",626,199,200,91,"자책",17,false],["idmwm6ic9oyl33fvv",968,35,200,91,"\"게으른 나\"",17,false],["idmwm6kskczlhrx5e",1101,185,200,91,"유능감 저하",17,false],["idmwm6l4okqo6334s",996,498,200,91,"동기저하\n(다시 시작이 어려워짐)",17,false],["idmwm7yqtfn2g5v2z",122,889,200,91,"식은땀, 답답한 느낌",17,false],["idmwm7z3eack59o93",589,932,200,91,"과제 제출 실패",17,false],["idmwm7z9jumkcxxf3",962,880,200,91,"교수님/동료들의\n부정적인 평가",17,false],["idmwm801mym28u7wv",54,164,200,91,"나 자신에 초점",17,false]];
+const LEGACY_17_EDGE_SIG=[["idmwm6hhp014yzib0","idmwm6hl2kj8wjjsv",-72,176,-8,-209,"forward",false,{"x":0,"y":0.475},null],["idmwm6hl2kj8wjjsv","idmwm6hoyki5v7gif",50,37,-74,44,"forward",false,null,null],["idmwm6hoyki5v7gif","idmwm6hu4d8472jio",-67,111,15,-134,"forward",false,null,null],["idmwm6i3akbhqznst","idmwm6ic9oyl33fvv",39,-84,-113,-12,"forward",false,{"x":0.488,"y":0},{"x":0,"y":0.555}],["idmwm6kskczlhrx5e","idmwm6l4okqo6334s",21,125,-14,-105,"forward",false,null,null],["idmwm6hu4d8472jio","idmwm7yqtfn2g5v2z",-87.38970746645407,-20.394739747012533,87.57029253354591,-19.60485261382964,"forward",false,null,null],["idmwm7yqtfn2g5v2z","idmwm7z3eack59o93",74.43522161204126,27.135458220417476,-78.20477838795873,12.686526181582574,"forward",false,null,null],["idmwm7z3eack59o93","idmwm7z9jumkcxxf3",64.37442443115614,12.192049467105765,-59.46557556884384,27.505597854202524,"forward",false,null,null],["idmwm6l4okqo6334s","idmwm6hoyki5v7gif",-93.73074702825942,-24.476293962208594,95.62925297174057,-15.4786265755996,"forward",false,null,null],["idmwm7z9jumkcxxf3","idmwm801mym28u7wv",-91,-418,502,128,"forward",false,null,{"x":0.536,"y":1}],["idmwm801mym28u7wv","idmwm6i3akbhqznst",132.69850831541373,28.15706969678648,-135.14149168458624,11.768258507975295,"forward",false,null,null],["idmwm6ic9oyl33fvv","idmwm6kskczlhrx5e",68,29,9,-41,"forward",false,{"x":1,"y":0.467},{"x":0.591,"y":0}]];
+function isUnedited17PtExample(o){
+ if(!o||o.nodes.length!==LEGACY_17_NODE_SIG.length||o.edges.length!==LEGACY_17_EDGE_SIG.length)return false;
+ if(!o.nodes.every((n,i)=>JSON.stringify([n.id,n.x,n.y,n.w,n.h,n.text,n.fs,!!n.highlighted])===JSON.stringify(LEGACY_17_NODE_SIG[i])))return false;
+ if(!o.edges.every((e,i)=>JSON.stringify([e.from,e.to,e.o1.x,e.o1.y,e.o2.x,e.o2.y,e.direction,!!e.dash,e.fromAnchor??null,e.toAnchor??null])===JSON.stringify(LEGACY_17_EDGE_SIG[i])))return false;
+ return o.zones.length===9&&o.zones.every((z,i)=>z===INITIAL_ZONES[i])&&o.showZones===true&&!o.showGrid;
+}
 
 // 구버전 기본 영어 예제만 새 예제로 안전하게 교체하기 위한 비교용 함수.
 function legacySampleForMigration(){
@@ -415,13 +412,9 @@ function renderOverlay(){
 function updateView(){
  const r=svg.getBoundingClientRect();if(!r.width||!r.height)return;
  svg.setAttribute('viewBox',`${camera.x} ${camera.y} ${r.width/camera.z} ${r.height/camera.z}`);
- $('zoomLabel').textContent=Math.round(camera.z*100)+'%';
  if(editId)positionEditor();
 }
 function hint(){
- $('info').textContent=`메모 ${doc.nodes.length}개 · 화살표 ${doc.edges.length}개`+(selection.nodes.length?` · 메모 ${selection.nodes.length}개 선택`:'')+(selection.edge?' · 화살표 선택':'');
- $('undoBtn').disabled=!undoStack.length;$('redoBtn').disabled=!redoStack.length;
- document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));
  const selected=doc.nodes.filter(n=>selection.nodes.includes(n.id));
  const allHighlighted=selected.length>0&&selected.every(n=>n.highlighted);
  $('highlightBtn').classList.toggle('active',allHighlighted);
@@ -445,12 +438,11 @@ function contentBounds(){
 function fit(){const r=stage.getBoundingClientRect();if(!r.width||!r.height)return;const b=contentBounds();camera.z=clamp(Math.min((r.width-40)/b.w,(r.height-40)/b.h),.18,2);camera.x=b.x-(r.width/camera.z-b.w)/2;camera.y=b.y-(r.height/camera.z-b.h)/2;updateView();}
 function worldAt(clientX,clientY){const r=svg.getBoundingClientRect();return{x:camera.x+(clientX-r.left)/camera.z,y:camera.y+(clientY-r.top)/camera.z};}
 function zoomAt(clientX,clientY,nextZ){const p=worldAt(clientX,clientY),r=svg.getBoundingClientRect();camera.z=clamp(nextZ,.18,3.6);camera.x=p.x-(clientX-r.left)/camera.z;camera.y=p.y-(clientY-r.top)/camera.z;updateView();}
-function zoomCenter(f){const r=svg.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,camera.z*f);}
 function setMode(m){finishEdit(true);mode=m;connectFrom=null;hint();renderOverlay();}
 function clearSel(){selection={nodes:[],edge:null};}
 function selectNode(id,shift=false){if(shift){const arr=selection.nodes;selection.edge=null;selection.nodes=arr.includes(id)?arr.filter(x=>x!==id):[...arr,id];}else{if(!selection.nodes.includes(id))selection.nodes=[id];selection.edge=null;}renderOverlay();renderInspector();hint();}
 function selectEdge(id){selection={nodes:[],edge:id};renderOverlay();renderInspector();hint();}
-function newNode(p){const n={id:uid(),x:Math.round(p.x-100),y:Math.round(p.y-45),w:200,h:91,text:'새 메모',fs:17};mutate(()=>{doc.nodes.push(n);selection={nodes:[n.id],edge:null};});setMode('select');openEditor(n.id,true);}
+function newNode(p){const n={id:uid(),x:Math.round(p.x-100),y:Math.round(p.y-45),w:200,h:91,text:'새 메모',fs:DEFAULT_NODE_FONT};mutate(()=>{doc.nodes.push(n);selection={nodes:[n.id],edge:null};});setMode('select');openEditor(n.id,true);}
 function newEdge(a,b){mutate(()=>{const e={id:uid(),from:a,to:b,o1:{x:0,y:0},o2:{x:0,y:0},direction:'forward',dash:false};doc.edges.push(e);autoCurve(e);selection={nodes:[],edge:e.id};});setMode('select');}
 function deleteSelection(){if(!selection.nodes.length&&!selection.edge)return;mutate(()=>{const rm=new Set(selection.nodes);doc.nodes=doc.nodes.filter(n=>!rm.has(n.id));doc.edges=doc.edges.filter(e=>!rm.has(e.from)&&!rm.has(e.to)&&e.id!==selection.edge);clearSel();});}
 function duplicateSelected(){if(!selection.nodes.length)return;mutate(()=>{const ids=new Map(),copies=[];for(const id of selection.nodes){const n=doc.nodes.find(t=>t.id===id);if(!n)continue;const c=clone(n);c.id=uid();c.x+=28;c.y+=28;ids.set(id,c.id);copies.push(c);}doc.nodes.push(...copies);const newLinks=doc.edges.filter(e=>ids.has(e.from)&&ids.has(e.to)).map(e=>({...clone(e),id:uid(),from:ids.get(e.from),to:ids.get(e.to)}));doc.edges.push(...newLinks);selection={nodes:copies.map(n=>n.id),edge:null};});}
@@ -659,15 +651,15 @@ document.querySelectorAll('.toolbar-menu').forEach(menu=>{
 document.addEventListener('pointerdown',e=>{
  if(!e.target.closest('.toolbar-menu'))document.querySelectorAll('.toolbar-menu').forEach(menu=>{menu.open=false;});
 });
-document.querySelectorAll('[data-mode]').forEach(btn=>btn.addEventListener('click',()=>setMode(btn.dataset.mode)));
+// V/N/C/H 단축키와 캔버스 직접 조작은 계속 지원합니다.
 $('highlightBtn').onclick=()=>{
- if(!selection.nodes.length){$('info').textContent='강조할 노드를 먼저 선택하세요.';return;}
+ if(!selection.nodes.length){const p=$('inspector').querySelector('p');if(p)p.textContent='강조하려면 먼저 노드를 선택하세요.';return;}
  const selected=new Set(selection.nodes),target=doc.nodes.filter(n=>selected.has(n.id));
  const next=!target.every(n=>n.highlighted);
  mutate(()=>{for(const n of target)n.highlighted=next;});
 };
-$('undoBtn').onclick=undo;$('redoBtn').onclick=redo;$('fitBtn').onclick=fit;
-$('zoomIn').onclick=()=>zoomCenter(1.2);$('zoomOut').onclick=()=>zoomCenter(1/1.2);
+$('fitBtn').onclick=fit;
+
 $('sidebarToggle').onclick=()=>{$('sidebar').classList.toggle('open');$('sidebarToggle').textContent=$('sidebar').classList.contains('open')?'✕ 닫기':'⚙ 설정';};
 $('saveBtn').onclick=()=>{finishEdit(true);download('PBT_curve_map.json',JSON.stringify(doc,null,2),'application/json;charset=utf-8');};
 $('openBtn').onclick=()=>{$('fileInput').value='';$('fileInput').click();};
@@ -746,7 +738,7 @@ try{
  doc=saved?sanitizeImport(JSON.parse(saved)):addSample();
  // 기존에 수정 없이 저장했던 구버전 영어 예제만 교체합니다.
  // 사용자가 직접 수정한 문서는 자동으로 덮어쓰지 않습니다.
- if(saved&&isUntouchedLegacySample(doc)){doc=addSample();persist();}
+ if(saved&&(isUntouchedLegacySample(doc)||isUnedited17PtExample(doc))){doc=addSample();persist();}
 }catch(err){doc=addSample();}
 render();requestAnimationFrame(fit);
 })();
